@@ -1,3 +1,9 @@
+# Ignore local env vars (direnv)
+.envrc
+
+# Ignore auto-generated requirements.txt file.
+requirements.txt
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
