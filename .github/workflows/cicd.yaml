@@ -4,11 +4,14 @@ on:
   push:
     branches:
       - main
+    tags:
+      # * is a special character in YAML so we need to quote this string
+      - "*"
   pull_request:
     branches:
       - main
   schedule:
-    # * is a special character in YAML so you have to quote this string
+    # * is a special character in YAML so we need to quote this string
     - cron: "0 0 * * SUN"
 
 defaults:

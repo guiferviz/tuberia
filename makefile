@@ -1,6 +1,8 @@
 POETRY=poetry
 PYTEST=$(POETRY) run pytest
 PACKAGE=tuberia
+GIT=git
+GIT_TAG=$(shell $(GIT) describe --tags)
 
 
 build: requirements.txt
@@ -31,4 +33,5 @@ doc:
 	$(POETRY) run mkdocs build
 
 publish-doc:
+	$(POETRY) version $(GIT_TAG)
 	$(POETRY) run mkdocs gh-deploy --force
