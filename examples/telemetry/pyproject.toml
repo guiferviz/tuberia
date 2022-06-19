@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "telemetry"
+version = "0.0.0"
+description = "Tuberia example using telemetry data"
+authors = ["Guillermo Fernandez <guillermo.fernandez@truata.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.1.2"
+tuberia = {path = "../..", develop = true}
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
