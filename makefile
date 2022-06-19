@@ -1,6 +1,5 @@
 POETRY=poetry
 PYTEST=$(POETRY) run pytest
-PACKAGE=tuberia
 GIT=git
 GIT_TAG=$(shell $(GIT) describe --tags)
 
@@ -27,7 +26,10 @@ format_and_lint:
 	$(POETRY) run pre-commit run --all
 
 test:
-	$(PYTEST) --cov=$(PACKAGE) --cov-report=term --cov-report=html --cov-report=xml tests/
+	$(POETRY) run coverage run --source=src/ -m pytest tests/
+	$(POETRY) run coverage report
+	$(POETRY) run coverage xml
+	$(POETRY) run coverage html
 
 doc:
 	$(POETRY) run mkdocs build

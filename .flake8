@@ -1,5 +1,6 @@
 [flake8]
 exclude = .git,__pycache__
+per-file-ignores=__init__.py:F401
 extend-ignore =
     # Indentation — black handles
     E1
