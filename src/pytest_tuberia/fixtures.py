@@ -6,13 +6,13 @@ import pytest
 from pyspark.sql import SparkSession
 
 from pytest_tuberia.utils import database_generator
-from tuberia.spark import get_spark_session_depend_on_environment, set_spark
+from tuberia.spark import set_spark, setup_spark_session_depend_on_environment
 
 
 @pytest.fixture(scope="session")
 def spark(tmp_path_factory) -> Iterator[SparkSession]:
     temporal_dir = str(tmp_path_factory.mktemp("spark_data"))
-    spark_session = get_spark_session_depend_on_environment(temporal_dir)
+    spark_session = setup_spark_session_depend_on_environment(temporal_dir)
     set_spark(spark_session)
     yield spark_session
     set_spark(None)
