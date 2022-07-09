@@ -43,6 +43,7 @@ pyspark = { version = "3.2.0", optional = true }
 # Notice that delta-spark version must be in sync with pyspark:
 # https://docs.delta.io/latest/releases.html#compatibility-with-apache-spark
 delta-spark = { version = "1.1.0", optional = true }
+makefun = "^1.14.0"
 
 
 [tool.poetry.extras]
