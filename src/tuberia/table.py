@@ -1,12 +1,8 @@
-from typing import Any, Callable, Optional, Union, overload
+from typing import Any, Callable, Union, overload
 
 import prefect
 import pydantic
-from makefun import wraps
-from prefect.core.task import _validate_run_signature
 from prefect.tasks.core.function import FunctionTask
-from pydantic.typing import NoneType
-from pyspark.sql import DataFrame
 
 
 class Table(pydantic.BaseModel):
@@ -26,45 +22,6 @@ class TableTask(prefect.Task):
 class TableFunctionTask(TableTask, FunctionTask):
     def __init__(self, fun: Callable[..., Table], **kwargs):
         super().__init__(fun, **kwargs)
-
-
-class DataFrameTableTask(TableTask):
-    def get_table_name(self, **kwargs) -> str:
-        return self.name.format(**kwargs)
-
-    def define(self, **_: Any) -> DataFrame:
-        raise NotImplementedError()
-
-    def persist(self, _: DataFrame) -> Table:
-        raise NotImplementedError()
-
-    def validate(self, _: Table):
-        pass
-
-    def run(self, **kwargs: Any) -> Table:
-        df = self.define(**kwargs)
-        table = self.persist(df)
-        self.validate(table)
-        return table
-
-
-class DataFrameTableFunctionTask(TableTask):
-    def __init__(
-        self,
-        define: Optional[Callable[..., DataFrame]] = None,
-        persist: Optional[Callable[[DataFrame], Table]] = None,
-        validate: Optional[Callable[[Table], NoneType]] = None,
-        **kwargs: Any,
-    ):
-        if define is not None:
-            _validate_run_signature(define)
-            self.run = wraps(define)(self.run)
-            self.define = define
-        if persist is not None:
-            self.persist = persist
-        if validate is not None:
-            self.validate = validate
-        super().__init__(**kwargs)
 
 
 # Taken from prefect/utilities/tasks.py:
