@@ -1,49 +1,74 @@
-from typing import Any, Callable, Union, overload
+from typing import Dict, List
 
 import prefect
 import pydantic
-from prefect.tasks.core.function import FunctionTask
 
 
-class Table(pydantic.BaseModel):
+class MetaTable(pydantic.main.ModelMetaclass):
+    def __new__(cls, name, bases, dct):
+        return super().__new__(cls, name, bases, dct)
+
+
+class Table(pydantic.BaseModel, metaclass=MetaTable):
     database: str
+    prefix_name: str = ""
     name: str
+    suffix_name: str = ""
+    path: str = ""
 
     @property
     def full_name(self) -> str:
-        return f"{self.database}.{self.name}"
+        return (
+            f"{self.database}.{self.prefix_name}{self.name}{self.suffix_name}"
+        )
+
+    def create(self):
+        pass
 
 
 class TableTask(prefect.Task):
-    def run(self, **_: Any) -> Table:
-        raise NotImplementedError()
+    def __init__(self, table: Table, **kwargs):
+        super().__init__(name=table.full_name, **kwargs)
+        self.table = table
+
+    def run(self) -> Table:
+        self.table.create()
+        return self.table
 
 
-class TableFunctionTask(TableTask, FunctionTask):
-    def __init__(self, fun: Callable[..., Table], **kwargs):
-        super().__init__(fun, **kwargs)
+def make_flow(tables: List[Table]):
+    with prefect.Flow("make_tables") as flow:
+        existing_tasks: Dict[str, prefect.Task] = {}
+        for i in tables:
+            make_table_task(i, existing_tasks)
+    return flow
 
 
-# Taken from prefect/utilities/tasks.py:
-# To support type checking with optional arguments to `table`, we need to make
-# use of `typing.overload`
-@overload
-def table(fun: Callable[..., Table]) -> TableFunctionTask:  # type: ignore
-    pass
+def make_table_task(
+    table: Table, existing_tasks: Dict[str, prefect.Task]
+) -> prefect.Task:
+    print(f"analyzing table {table.full_name}")
+    if table.full_name in existing_tasks:
+        return existing_tasks[table.full_name]
+    dependencies: List[prefect.Task] = []
+    for k, v in table:
+        if isinstance(v, Table):
+            print(f"table found in {k}")
+            dependencies.append(make_table_task(v, existing_tasks))
+    task = TableTask(table)
+    task.set_dependencies(upstream_tasks=dependencies)
+    existing_tasks[table.full_name] = task
+    return task
 
 
-@overload
-def table(
-    **task_init_kwargs: Any,
-) -> Callable[[Callable[..., Table]], TableFunctionTask]:  # type: ignore
-    pass
-
-
-def table(  # type: ignore
-    fun: Callable[..., Table] = None, **task_init_kwargs: Any
-) -> Union[
-    TableFunctionTask, Callable[[Callable[..., Table]], TableFunctionTask]
-]:
-    if fun is None:
-        return lambda fun: TableFunctionTask(fun=fun, **task_init_kwargs)
-    return TableFunctionTask(fun=fun, **task_init_kwargs)
+def run_flow(flow: prefect.Flow):
+    state = flow.run()
+    if state is not None and not state.is_successful():
+        state_list, state_summary = "", ""
+        for task, result in state.result.items():
+            state_list += f"\n{task.name} = {result}"
+            state_summary += f"\n{task.name} --> {type(result).__name__}"
+        raise Exception(
+            f"errors running the flow: {state.message}{state_summary}"
+        )
+    return state
