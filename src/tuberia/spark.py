@@ -58,6 +58,7 @@ def setup_local_spark_session(
     builder = (
         SparkSession.builder.master("local[1]")
         .appName("tuberia_project")
+        # TODO: move spark properties to a settings object.
         .config("spark.sql.shuffle.partitions", "1")
         .config("spark.default.parallelism", "1")
         .config(

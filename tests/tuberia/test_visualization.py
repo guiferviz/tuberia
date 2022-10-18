@@ -2,10 +2,10 @@ import re
 import textwrap
 from typing import Dict, List
 
+import pydantic
 import pytest
-from prefect import Flow
 
-from tuberia.table import Table, table
+from tuberia.table import Table, make_flow
 from tuberia.visualization import (
     flow_to_mermaid_code,
     open_mermaid_flow_in_browser,
@@ -14,24 +14,33 @@ from tuberia.visualization import (
 
 @pytest.fixture(scope="module")
 def flow():
-    @table
-    def one() -> Table:
-        return Table(database="my_database", name="one")
+    class TableOne(Table):
+        database: str = "my_database"
+        name: str = "one"
 
-    @table
-    def two(one: Table, letter: str) -> Table:
-        return Table(database="my_database", name="two")
+    class TableTwo(Table):
+        database: str = "my_database"
+        source_table: Table
+        letter: str
+        name: str = "two_{letter}"
 
-    @table
-    def concat(tables: List[Table]) -> Table:
-        print(f"table concat created from {', '.join(i.name for i in tables)}")
-        return Table(database="my_database", name="concat")
+        @pydantic.root_validator
+        def format_name(cls, values) -> dict:
+            if "name" in values:
+                values["name"] = values["name"].format(**values)
+            return values
 
-    with Flow("test") as flow:
-        one_table = one()
-        two_a_table = two(one_table, "a")
-        two_b_table = two(one_table, "b")
-        concat([two_a_table, two_b_table])
+    class TableConcat(Table):
+        database: str = "my_database"
+        name: str = "concat"
+        tables_to_concat: List[Table]
+
+    table_one = TableOne()
+    table_two_a = TableTwo(source_table=table_one, letter="a")
+    table_two_b = TableTwo(source_table=table_one, letter="b")
+    table_concat = TableConcat(tables_to_concat=[table_two_a, table_two_b])
+    flow = make_flow([table_concat])
+    open_mermaid_flow_in_browser(flow)
     return flow
 
 
@@ -46,11 +55,10 @@ def test_flow_to_mermaid_code(flow):
     Example of expected code:
 
         graph TD
-            task0["one"]
-            task1["concat"]
-            task2["two(letter=a)"]
-            task3["List"]
-            task4["two(letter=b)"]
+            task0["my_database.one"]
+            task1["my_database.concat"]
+            task2["my_database.two_a"]
+            task4["my_database.two_b"]
             task0 --> task2
             task0 --> task4
             task2 --> task3
@@ -60,14 +68,13 @@ def test_flow_to_mermaid_code(flow):
 
     actual = flow_to_mermaid_code(flow).split("\n")
     assert actual[0] == "graph TD"
-    mapping = get_task_name_id_mapping_from_mermaid(actual[1:6])
-    assert set(actual[6:]) == set(
+    mapping = get_task_name_id_mapping_from_mermaid(actual[1:5])
+    assert set(actual[5:]) == set(
         [
-            f"    {mapping['one']} --> {mapping['two(letter=a)']}",
-            f"    {mapping['one']} --> {mapping['two(letter=b)']}",
-            f"    {mapping['two(letter=a)']} --> {mapping['List']}",
-            f"    {mapping['two(letter=b)']} --> {mapping['List']}",
-            f"    {mapping['List']} --> {mapping['concat']}",
+            f"    {mapping['my_database.one']} --> {mapping['my_database.two_a']}",
+            f"    {mapping['my_database.one']} --> {mapping['my_database.two_b']}",
+            f"    {mapping['my_database.two_a']} --> {mapping['my_database.concat']}",
+            f"    {mapping['my_database.two_b']} --> {mapping['my_database.concat']}",
         ]
     )
 

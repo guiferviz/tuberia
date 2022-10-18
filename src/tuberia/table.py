@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import prefect
 import pydantic
@@ -14,13 +14,17 @@ class Table(pydantic.BaseModel, metaclass=MetaTable):
     prefix_name: str = ""
     name: str
     suffix_name: str = ""
-    path: str = ""
+    path: Optional[str] = None
 
     @property
     def full_name(self) -> str:
         return (
             f"{self.database}.{self.prefix_name}{self.name}{self.suffix_name}"
         )
+
+    @property
+    def id(self) -> str:
+        return self.full_name
 
     def create(self):
         pass
@@ -55,6 +59,10 @@ def make_table_task(
         if isinstance(v, Table):
             print(f"table found in {k}")
             dependencies.append(make_table_task(v, existing_tasks))
+        elif isinstance(v, List) and len(v) > 0 and isinstance(v[0], Table):
+            for i in v:
+                dependencies.append(make_table_task(i, existing_tasks))
+        # TODO: support dictionaries.
     task = TableTask(table)
     task.set_dependencies(upstream_tasks=dependencies)
     existing_tasks[table.full_name] = task
