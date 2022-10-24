@@ -10,6 +10,9 @@ class MetaTable(pydantic.main.ModelMetaclass):
 
 
 class Table(pydantic.BaseModel, metaclass=MetaTable):
+    class Config:
+        arbitrary_types_allowed = True
+
     database: str
     prefix_name: str = ""
     name: str
@@ -27,7 +30,17 @@ class Table(pydantic.BaseModel, metaclass=MetaTable):
         return self.full_name
 
     def create(self):
-        pass
+        df = self.define()
+        self.write(df)
+
+    def define(self):
+        raise NotImplementedError()
+
+    def write(self, df):
+        writer = df.write
+        if self.path:
+            writer = writer.option("path", f"{self.path}/{self.name}")
+        writer.saveAsTable(self.full_name)
 
 
 class TableTask(prefect.Task):
