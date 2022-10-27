@@ -14,14 +14,18 @@ class Movies(Flow):
     database: str
     database_dir: str
 
-    def create(self) -> List[Table]:
+    def define(self) -> List[Table]:
         defaults = dict(
             database=self.database,
             path=self.database_dir,
         )
-        input_movies = InputMovies(**defaults, input_file_path=self.input_movies_path)
+        input_movies = InputMovies(
+            **defaults, input_file_path=self.input_movies_path
+        )
         input_credits = InputCredits(
             **defaults, input_file_path=self.input_credits_path
         )
-        exploded_credits = ExplodedCredits(**defaults, input_credits=input_credits)
+        exploded_credits = ExplodedCredits(
+            **defaults, input_credits=input_credits
+        )
         return [input_movies, input_credits, exploded_credits]

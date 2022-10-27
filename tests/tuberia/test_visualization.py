@@ -5,7 +5,8 @@ from typing import Dict, List
 import pydantic
 import pytest
 
-from tuberia.table import Table, make_flow
+from tuberia.flow import make_prefect_flow
+from tuberia.table import Table
 from tuberia.visualization import (
     flow_to_mermaid_code,
     open_mermaid_flow_in_browser,
@@ -39,7 +40,7 @@ def flow():
     table_two_a = TableTwo(source_table=table_one, letter="a")
     table_two_b = TableTwo(source_table=table_one, letter="b")
     table_concat = TableConcat(tables_to_concat=[table_two_a, table_two_b])
-    flow = make_flow([table_concat])
+    flow = make_prefect_flow([table_concat])
     open_mermaid_flow_in_browser(flow)
     return flow
 

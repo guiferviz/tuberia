@@ -1,5 +1,4 @@
-from tuberia.table import Table, make_flow, run_flow
-from tuberia.visualization import open_mermaid_flow_in_browser
+from tuberia.table import Table
 
 
 def test_table():
@@ -39,16 +38,8 @@ def test_table_dependencies():
     table_0 = Table0(database="my_database")
     table_1 = Table1(database="my_database", previous_table=table_0)
     table_2 = Table2(database="my_database", previous_table=table_0)
-    table_3 = Table3(
+    Table3(
         database="my_database",
         previous_table_1=table_1,
         previous_table_2=table_2,
     )
-
-    flow = make_flow([table_1, table_2])
-    open_mermaid_flow_in_browser(flow)
-    run_flow(flow)
-
-    flow = make_flow([table_3])
-    open_mermaid_flow_in_browser(flow)
-    run_flow(flow)

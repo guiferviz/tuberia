@@ -1,9 +1,5 @@
 import pytest
 from movies.flows.movies import Movies
-from movies.settings import MoviesSettings
-
-from tuberia.table import make_flow, run_flow
-from tuberia.visualization import open_mermaid_flow_in_browser
 
 
 @pytest.fixture
@@ -12,7 +8,7 @@ def database_dir(tmp_path_factory, test_database) -> str:
 
 
 @pytest.fixture
-def movies_flow(database_dir, test_database) -> MoviesSettings:
+def movies_flow(database_dir, test_database) -> Movies:
     return Movies(
         input_credits_path="./data/tmdb_5000_credits.csv",
         input_movies_path="./data/tmdb_5000_movies.csv",
@@ -21,11 +17,11 @@ def movies_flow(database_dir, test_database) -> MoviesSettings:
     )
 
 
-def test_movies_data_warehouse(spark, test_database, movies_flow):
+def test_movies(spark, test_database, movies_flow):
     print(f"{test_database=}, {movies_flow=}")
-    final_tables = movies_flow.create()
-    open_mermaid_flow_in_browser(make_flow(final_tables))
-    run_flow(make_flow(final_tables))
+    movies_flow.plot()
+    movies_flow.run()
+    final_tables = movies_flow.define()
     input_movies = final_tables[0]
     spark.table(input_movies.full_name).select("id", "title").show()
     input_credits = final_tables[1]
