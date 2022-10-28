@@ -1,0 +1,6 @@
+{
+    "input_credits_path": "./data/tmdb_5000_credits.csv",
+    "input_movies_path": "./data/tmdb_5000_movies.csv",
+    "database": "movies_db",
+    "database_dir": "./lake/databases/"
+}

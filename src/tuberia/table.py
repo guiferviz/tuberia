@@ -1,49 +1,63 @@
-from typing import Any, Callable, Union, overload
+from typing import Optional
 
+import inflection
 import prefect
 import pydantic
-from prefect.tasks.core.function import FunctionTask
 
 
-class Table(pydantic.BaseModel):
+class MetaTable(pydantic.main.ModelMetaclass):
+    def __new__(cls, name, bases, dct):
+        return super().__new__(cls, name, bases, dct)
+
+
+class Table(pydantic.BaseModel, metaclass=MetaTable):
+    class Config:
+        arbitrary_types_allowed = True
+
     database: str
-    name: str
+    prefix_name: str = ""
+    name: str = None  # type: ignore
+    suffix_name: str = ""
+    path: Optional[str] = None
+
+    @pydantic.validator("name", always=True)
+    def default_name(cls, name):
+        if name is None:
+            return inflection.singularize(inflection.underscore(cls.__name__))  # type: ignore
+        return name
 
     @property
     def full_name(self) -> str:
-        return f"{self.database}.{self.name}"
+        return (
+            f"{self.database}.{self.prefix_name}{self.name}{self.suffix_name}"
+        )
+
+    @property
+    def id(self) -> str:
+        return self.full_name
+
+    def create(self):
+        df = self.define()
+        self.write(df)
+
+    def define(self):
+        raise NotImplementedError()
+
+    def write(self, df):
+        writer = df.write.format("delta")
+        if self.path:
+            writer = writer.option(
+                "path",
+                f"{self.path}/{self.database}/{self.prefix_name}{self.name}{self.suffix_name}",
+            )
+        writer.saveAsTable(self.full_name)
 
 
 class TableTask(prefect.Task):
-    def run(self, **_: Any) -> Table:
-        raise NotImplementedError()
+    def __init__(self, table: Table, **kwargs):
+        super().__init__(name=table.full_name, **kwargs)
+        self.table = table
 
-
-class TableFunctionTask(TableTask, FunctionTask):
-    def __init__(self, fun: Callable[..., Table], **kwargs):
-        super().__init__(fun, **kwargs)
-
-
-# Taken from prefect/utilities/tasks.py:
-# To support type checking with optional arguments to `table`, we need to make
-# use of `typing.overload`
-@overload
-def table(fun: Callable[..., Table]) -> TableFunctionTask:  # type: ignore
-    pass
-
-
-@overload
-def table(
-    **task_init_kwargs: Any,
-) -> Callable[[Callable[..., Table]], TableFunctionTask]:  # type: ignore
-    pass
-
-
-def table(  # type: ignore
-    fun: Callable[..., Table] = None, **task_init_kwargs: Any
-) -> Union[
-    TableFunctionTask, Callable[[Callable[..., Table]], TableFunctionTask]
-]:
-    if fun is None:
-        return lambda fun: TableFunctionTask(fun=fun, **task_init_kwargs)
-    return TableFunctionTask(fun=fun, **task_init_kwargs)
+    def run(self) -> Table:
+        self.table.create()
+        return self.table
