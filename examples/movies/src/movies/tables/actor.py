@@ -5,7 +5,6 @@ from tuberia.table import Table
 
 
 class Actor(Table):
-    name = "actor"
     exploded_credits: ExplodedCredits
 
     def define(self):
@@ -14,4 +13,5 @@ class Actor(Table):
             .table(self.exploded_credits.full_name)
             .select("actor")
             .distinct()
+            .selectExpr("monotonically_increasing_id() AS id", "actor AS name")
         )

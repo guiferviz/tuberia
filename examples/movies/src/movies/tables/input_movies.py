@@ -5,7 +5,6 @@ from tuberia.table import Table
 
 
 class InputMovies(Table):
-    name: str = "input_movies"
     input_file_path: str
     input_file_schema: T.StructType = T.StructType(
         [

@@ -2,23 +2,35 @@ import abc
 from typing import Dict, List
 
 import prefect
-import pydantic
 
+from tuberia.base_settings import BaseSettings
 from tuberia.table import Table, TableTask
 from tuberia.visualization import open_mermaid_flow_in_browser
 
 
-class Flow(abc.ABC, pydantic.BaseModel):
+class Flow(abc.ABC, BaseSettings):
     @abc.abstractmethod
     def define(self):
         raise NotImplementedError()
 
+    def pre_run(self):
+        pass
+
     def run(self):
         tables = self.define()
         flow = make_prefect_flow(tables)
+        # TODO: improve the way we are calling pre and post run hooks.
+        self.pre_run()
         run_flow(flow)
+        self.post_run()
+
+    def post_run(self):
+        pass
 
     def plot(self):
+        self.visualize()
+
+    def visualize(self):
         tables = self.define()
         flow = make_prefect_flow(tables)
         open_mermaid_flow_in_browser(flow)

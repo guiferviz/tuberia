@@ -6,7 +6,6 @@ from tuberia.table import Table
 
 
 class ExplodedCredits(Table):
-    name = "exploded_credits"
     input_credits: InputCredits
 
     def define(self):
@@ -15,5 +14,7 @@ class ExplodedCredits(Table):
             .table(self.input_credits.full_name)
             .select("id", "cast")
             .withColumn("cast", F.explode("cast"))
-            .selectExpr("id", "cast.character as character", "cast.name as actor")
+            .selectExpr(
+                "id", "cast.character as character", "cast.name as actor"
+            )
         )

@@ -1,5 +1,6 @@
 from typing import Optional
 
+import inflection
 import prefect
 import pydantic
 
@@ -15,9 +16,15 @@ class Table(pydantic.BaseModel, metaclass=MetaTable):
 
     database: str
     prefix_name: str = ""
-    name: str
+    name: str = None  # type: ignore
     suffix_name: str = ""
     path: Optional[str] = None
+
+    @pydantic.validator("name", always=True)
+    def default_name(cls, name):
+        if name is None:
+            return inflection.singularize(inflection.underscore(cls.__name__))  # type: ignore
+        return name
 
     @property
     def full_name(self) -> str:
@@ -37,9 +44,12 @@ class Table(pydantic.BaseModel, metaclass=MetaTable):
         raise NotImplementedError()
 
     def write(self, df):
-        writer = df.write
+        writer = df.write.format("delta")
         if self.path:
-            writer = writer.option("path", f"{self.path}/{self.name}")
+            writer = writer.option(
+                "path",
+                f"{self.path}/{self.database}/{self.prefix_name}{self.name}{self.suffix_name}",
+            )
         writer.saveAsTable(self.full_name)
 
 

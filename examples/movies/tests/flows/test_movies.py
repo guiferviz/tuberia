@@ -8,23 +8,19 @@ def database_dir(tmp_path_factory, test_database) -> str:
 
 
 @pytest.fixture
-def movies_flow(database_dir, test_database) -> Movies:
+def movies_flow(database_dir, random_str) -> Movies:
     return Movies(
         input_credits_path="./data/tmdb_5000_credits.csv",
         input_movies_path="./data/tmdb_5000_movies.csv",
-        database=test_database,
+        database=f"test_database_{random_str(8)}",
         database_dir=database_dir,
     )
 
 
-def test_movies(spark, test_database, movies_flow):
-    print(f"{test_database=}, {movies_flow=}")
-    movies_flow.plot()
+def test_movies(spark, movies_flow):
+    movies_flow.visualize()
     movies_flow.run()
     final_tables = movies_flow.define()
-    input_movies = final_tables[0]
-    spark.table(input_movies.full_name).select("id", "title").show()
-    input_credits = final_tables[1]
-    spark.table(input_credits.full_name).select("id", "cast").show()
-    exploded_credits = final_tables[2]
-    spark.table(exploded_credits.full_name).show()
+    for i in final_tables:
+        print(i.full_name)
+        spark.table(i.full_name).show()

@@ -6,7 +6,6 @@ from tuberia.table import Table
 
 
 class InputCredits(Table):
-    name: str = "input_credits"
     input_file_path: str
     cast_schema = T.ArrayType(
         T.StructType(
