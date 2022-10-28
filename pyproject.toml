@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tuberia"
-version = "0.0.0"
+version = "0.0.1"
 description = "Tuberia... when data engineering meets software engineering"
 authors = [
   "guiferviz <guiferviz@gmail.com>"
