@@ -1,6 +1,5 @@
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
-
 from tuberia.spark import get_spark
 from tuberia.table import Table
 

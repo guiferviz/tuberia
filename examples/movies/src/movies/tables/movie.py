@@ -1,7 +1,7 @@
-from movies.tables.input_movies import InputMovies
-
 from tuberia.spark import get_spark
 from tuberia.table import Table
+
+from movies.tables.input_movies import InputMovies
 
 
 class Movie(Table):

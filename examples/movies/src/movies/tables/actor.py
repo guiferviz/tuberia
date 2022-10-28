@@ -1,7 +1,7 @@
-from movies.tables.exploded_credits import ExplodedCredits
-
 from tuberia.spark import get_spark
 from tuberia.table import Table
+
+from movies.tables.exploded_credits import ExplodedCredits
 
 
 class Actor(Table):
