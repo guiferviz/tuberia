@@ -19,6 +19,58 @@ optional = true
 pyspark = "^3.3.0"
 delta-spark = "^2.1.0"
 
+
+[tool.poetry.group.dev.dependencies]
+black = "^22.10.0"
+isort = "^5.10.1"
+flake8 = "^5.0.4"
+Flake8-pyproject = "^1.1.0.post0"
+pyright = "^1.1.277"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+profile = "black"
+line_length = 80
+
+[tool.black]
+line-length = 80
+
+[tool.pyright]
+include = ["src"]
+
+[tool.flake8]
+per-file-ignores = [
+    # Imported but unused.
+    "__init__.py:F401",
+]
+exclude = [
+    ".git",
+    "__pycache__",
+]
+extend-ignore = [
+    # Indentation — black handles
+    "E1",
+    "W1",
+    # Whitespace — black handles
+    "E2",
+    "W2",
+    # Blank lines — black handles
+    "E3",
+    "W3",
+    # Imports — isort handles
+    "E4",
+    "W4",
+    # Line length — black handles
+    "E5",
+    "W5",
+]
+max-line-length = 100
+# Print the total number of errors.
+count = true
+# Print the source code generating the error/warning in question.
+show-source = true
+# Count the number of occurrences of each error/warning code and print a report.
+statistics = true

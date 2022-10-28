@@ -45,13 +45,14 @@ pyspark = { version = "3.3.0", optional = true }
 delta-spark = { version = "2.1.0", optional = true }
 makefun = "^1.14.0"
 inflection = "^0.5.1"
+flake8 = "^5.0.4"
 
 
 [tool.poetry.extras]
 pyspark = ["pyspark", "delta-spark"]
 
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 # Testing.
 pytest = "^7.1.2"
 pytest-mock = "^3.6.1"
@@ -59,7 +60,8 @@ pytest-cov = "^3.0.0"
 # Debugging.
 pdbpp = "^0.10.3"
 # Static analyzers / formatters.
-flake8 = "^4.0.1"
+flake8 = "^5.0.4"
+Flake8-pyproject = "^1.1.0.post0"
 pyright = "^0.0.13"
 black = "^22.1.0"
 isort = "^5.10.1"
@@ -88,3 +90,38 @@ include = ["src"]
 
 [tool.poetry.plugins.pytest11]
 pytest_tuberia = "pytest_tuberia"
+
+
+[tool.flake8]
+per-file-ignores = [
+    # Imported but unused.
+    "__init__.py:F401",
+]
+exclude = [
+    ".git",
+    "__pycache__",
+]
+extend-ignore = [
+    # Indentation — black handles
+    "E1",
+    "W1",
+    # Whitespace — black handles
+    "E2",
+    "W2",
+    # Blank lines — black handles
+    "E3",
+    "W3",
+    # Imports — isort handles
+    "E4",
+    "W4",
+    # Line length — black handles
+    "E5",
+    "W5",
+]
+max-line-length = 100
+# Print the total number of errors.
+count = true
+# Print the source code generating the error/warning in question.
+show-source = true
+# Count the number of occurrences of each error/warning code and print a report.
+statistics = true

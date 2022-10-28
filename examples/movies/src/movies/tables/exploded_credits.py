@@ -1,8 +1,8 @@
 import pyspark.sql.functions as F
-from movies.tables.input_credits import InputCredits
-
 from tuberia.spark import get_spark
 from tuberia.table import Table
+
+from movies.tables.input_credits import InputCredits
 
 
 class ExplodedCredits(Table):
