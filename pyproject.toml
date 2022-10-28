@@ -28,10 +28,11 @@ classifiers = [
   "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 
-
 [tool.poetry.scripts]
 tuberia = "tuberia.__main__:main"
 
+[tool.poetry.plugins.pytest11]
+pytest_tuberia = "pytest_tuberia"
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -45,12 +46,9 @@ pyspark = { version = "3.3.0", optional = true }
 delta-spark = { version = "2.1.0", optional = true }
 makefun = "^1.14.0"
 inflection = "^0.5.1"
-flake8 = "^5.0.4"
-
 
 [tool.poetry.extras]
 pyspark = ["pyspark", "delta-spark"]
-
 
 [tool.poetry.group.dev.dependencies]
 # Testing.
@@ -69,28 +67,20 @@ pre-commit = "^2.18.1"
 # Docs.
 mkdocs-material = "^8.2.9"
 
-
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
-
 [tool.isort]
 profile = "black"
 line_length = 80
-
+extend_skip_glob = ["examples/*"]
 
 [tool.black]
 line-length = 80
 
-
 [tool.pyright]
 include = ["src"]
-
-
-[tool.poetry.plugins.pytest11]
-pytest_tuberia = "pytest_tuberia"
-
 
 [tool.flake8]
 per-file-ignores = [
