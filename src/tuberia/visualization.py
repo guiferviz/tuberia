@@ -12,6 +12,7 @@ def flow_to_mermaid_code(
     show_constant_values: bool = True,
     show_constant_names: bool = True,
     ignore_parameters: List[str] = [],
+    links: bool = False,
 ) -> str:
     edges = flow.all_downstream_edges()
     tasks = list(flow.tasks)
@@ -36,7 +37,12 @@ def flow_to_mermaid_code(
             f"({const_str})" if show_constant_names and const_str else ""
         )
         name = t.name + const_str
-        graph.append(f'{TAB}{ids[i]}["{name}"]')
+        if links:
+            graph.append(
+                f"""{TAB}{ids[i]}["<a href='../../tables/{t.table.__class__.__name__}'>{name}</a>"]"""
+            )
+        else:
+            graph.append(f'{TAB}{ids[i]}["{name}"]')
     edges_str = []
     for i, t in enumerate(tasks):
         for j in edges[t]:

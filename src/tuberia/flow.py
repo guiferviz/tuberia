@@ -1,14 +1,26 @@
 import abc
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import prefect
 
+from tuberia import utils
 from tuberia.base_settings import BaseSettings
 from tuberia.table import Table, TableTask
 from tuberia.visualization import open_mermaid_flow_in_browser
 
 
+class DependencyNode:
+    def __init__(self, node, dependencies):
+        self.node = node
+        self.dependencies = dependencies
+
+
 class Flow(abc.ABC, BaseSettings):
+    @staticmethod
+    def from_qualified_name(name: str) -> "Flow":
+        module_name, class_name = name.rsplit(".", 1)
+        return utils.get_module_member(module_name, class_name)
+
     @abc.abstractmethod
     def define(self):
         raise NotImplementedError()
@@ -34,6 +46,31 @@ class Flow(abc.ABC, BaseSettings):
         tables = self.define()
         flow = make_prefect_flow(tables)
         open_mermaid_flow_in_browser(flow)
+
+    def make_dependency_tree(self) -> List[DependencyNode]:
+        return []
+
+    def list_tables(self) -> List[Table]:
+        pending_tables = self.define()
+        tables: Dict[Any, Table] = {}
+        while len(pending_tables) > 0:
+            table = pending_tables.pop()
+            table_freeze = table.freeze()
+            if table_freeze not in tables:
+                pending_tables.extend(table._dependencies())
+                tables[table_freeze] = table
+        return list(tables.values())
+
+
+def _add_table_object(
+    table: Table, existing_tables_set: set, existing_tables_list: list
+):
+    table_freeze = table.freeze()
+    if table_freeze not in existing_tables_set:
+        for i in table._dependencies():
+            _add_table_object(i, existing_tables_set, existing_tables_list)
+        existing_tables_set.add(table_freeze)
+        existing_tables_list.append(table)
 
 
 def make_prefect_flow(tables: List[Table]):

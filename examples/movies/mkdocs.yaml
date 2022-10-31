@@ -1,9 +1,9 @@
-site_name: Tuberia Docs
+site_name: Movies - Tuberia Example Docs
 site_url: https://aidictive.com/tuberia
 site_author: guiferviz
 repo_url: https://github.com/aidictive/tuberia
 repo_name: Tuberia
-strict: true
+strict: false
 theme:
     name: material
     palette:
@@ -25,6 +25,7 @@ plugins:
     - tags:
         tags_file: tags.md
     - search
+    - include_dir_to_nav
 markdown_extensions:
     - meta
     # Code highlight.
@@ -74,4 +75,6 @@ extra:
 # Page tree
 nav:
     - Home: index.md
-    - Flows: flows/*
+    - Flows: flows/
+    - Tables: tables/
+    - Tags: tags.md

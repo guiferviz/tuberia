@@ -1,8 +1,10 @@
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 import inflection
 import prefect
 import pydantic
+
+from tuberia.utils import freeze
 
 
 class MetaTable(pydantic.main.ModelMetaclass):
@@ -19,6 +21,9 @@ class Table(pydantic.BaseModel, metaclass=MetaTable):
     name: str = None  # type: ignore
     suffix_name: str = ""
     path: Optional[str] = None
+
+    schema_: Optional[Any] = None
+    # It uses an underscore because schema already exist in pydantic.BaseModel.
 
     @pydantic.validator("name", always=True)
     def default_name(cls, name):
@@ -51,6 +56,26 @@ class Table(pydantic.BaseModel, metaclass=MetaTable):
                 f"{self.path}/{self.database}/{self.prefix_name}{self.name}{self.suffix_name}",
             )
         writer.saveAsTable(self.full_name)
+
+    def freeze(self):
+        return freeze(self)
+
+    def _dependencies(self) -> List["Table"]:
+        dependencies: Dict[Any, Table] = {}
+        for _, v in self:
+            if isinstance(v, Table):
+                dependencies[v.freeze()] = v
+            elif isinstance(v, List) and len(v) > 0 and isinstance(v[0], Table):
+                for i in v:
+                    dependencies[i.freeze()] = i
+            elif (
+                isinstance(v, Dict)
+                and len(v) > 0
+                and isinstance(next(v.values().__iter__()), Table)
+            ):
+                for _, vv in v:
+                    dependencies[vv.freeze()] = vv
+        return list(dependencies.values())
 
 
 class TableTask(prefect.Task):

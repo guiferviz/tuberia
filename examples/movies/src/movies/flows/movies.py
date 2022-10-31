@@ -13,6 +13,17 @@ from movies.tables.movie import Movie
 
 
 class Movies(Flow):
+    """Main flow.
+
+    The final objective of this flow is to create the following three tables:
+
+    ```mermaid
+    erDiagram
+        Movie ||--|{ ActsInMovie : has
+        Actor ||--|{ ActsInMovie : acts
+    ```
+
+    """
     input_credits_path: str
     input_movies_path: str
     database: str

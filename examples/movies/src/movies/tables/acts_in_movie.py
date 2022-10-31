@@ -1,3 +1,5 @@
+import pyspark.sql.types as T
+
 from tuberia.spark import get_spark
 from tuberia.table import Table
 
@@ -10,6 +12,12 @@ class ActsInMovie(Table):
     exploded_credits: ExplodedCredits
     actor: Actor
     movie: Movie
+    schema_: T.StructType = T.StructType(
+        [
+            T.StructField("movie_id", T.IntegerType()),
+            T.StructField("actor_id", T.LongType()),
+        ]
+    )
 
     def define(self):
         return get_spark().sql(
