@@ -34,12 +34,22 @@ def _flow_document(flow: Flow) -> str:
     mermaid_code = flow_to_mermaid_code(
         make_prefect_flow(flow.define()), links=True
     )
-    content = f"# {title}\n\n"
+    title = f"# {title}\n\n"
     if docs:
-        content += f"{_dedent_docs(docs)}\n\n"
+        docs = f"{_dedent_docs(docs)}\n\n"
     parameters = f"## Parameters\n\n```\n{flow.json(indent=4)}\n```\n\n"
     tables_flow = f"## Tables flow\n\n```mermaid\n{mermaid_code}\n```\n\n"
-    return f"{content}\n\n{parameters}{tables_flow}"
+    api = textwrap.dedent(
+        f"""
+            ## API
+            ### ::: {flow.__class__.__module__}.{flow.__class__.__name__}
+                options:
+                  show_root_heading: false
+                  show_submodules: true
+                  annotations_path: source\n\n
+        """
+    )
+    return f"{title}{api}{parameters}{tables_flow}"
 
 
 def _dedent_docs(docs: str) -> str:
@@ -53,15 +63,26 @@ def _dedent_docs(docs: str) -> str:
 def _table_document(table: Table) -> str:
     title = table.__class__.__name__
     docs = table.__doc__
-    content = f"# {title}\n\n"
+    title = f"# {title}\n\n"
     if docs:
-        content += f"{_dedent_docs(docs)}\n\n"
+        docs += f"{_dedent_docs(docs)}\n\n"
+    schema_str = ""
     if table.schema_:
         schema_str = "## Schema\n\n| Column name | Type |\n|---|---|\n"
         for i in table.schema_:
             schema_str += f"|{i.name}|{i.dataType.typeName()}|\n"
-        content += schema_str
-    return content
+        schema_str += "\n\n"
+    api = textwrap.dedent(
+        f"""
+            ## API
+            ### ::: {table.__class__.__module__}.{table.__class__.__name__}
+                options:
+                  show_root_heading: false
+                  show_submodules: true
+                  annotations_path: source\n\n
+        """
+    )
+    return f"{title}{api}{schema_str}"
 
 
 def _write_documentation_dict(documentation_dict, root_dir="docs", pprint=True):

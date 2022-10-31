@@ -28,6 +28,7 @@ Flake8-pyproject = "^1.1.0.post0"
 pyright = "^1.1.277"
 mkdocs-material = "^8.5.7"
 mkdocs-include-dir-to-nav = "^1.2.0"
+mkdocstrings = {extras = ["python"], version = "^0.19.0"}
 
 [build-system]
 requires = ["poetry-core"]

@@ -26,6 +26,15 @@ plugins:
         tags_file: tags.md
     - search
     - include_dir_to_nav
+    - mkdocstrings:
+        default_handler: python
+        handlers:
+          python:
+            options:
+              show_source: true
+              show_if_no_docstring: true
+              docstring_style: google
+
 markdown_extensions:
     - meta
     # Code highlight.
@@ -59,6 +68,9 @@ extra_javascript:
   - https://polyfill.io/v3/polyfill.min.js?features=es6
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
 
+extra_css:
+  - css/mkdocstrings.css
+
 extra:
   generator: false
   analytics:
@@ -75,6 +87,7 @@ extra:
 # Page tree
 nav:
     - Home: index.md
+    - API: api.md
     - Flows: flows/
     - Tables: tables/
     - Tags: tags.md
