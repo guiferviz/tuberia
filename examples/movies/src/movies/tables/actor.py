@@ -12,6 +12,10 @@ class Actor(Table):
     A table in which we assign an ID to each person like these:
     <img src="https://imagenes.elpais.com/resizer/LafH8tTghcjGBTIUUk_i2Nddqg0=/1960x1470/arc-anglerfish-eu-central-1-prod-prisa.s3.amazonaws.com/public/M5WQSP3N5H2RLPE32VELYT6NEY.jpg"></img>
 
+    Attributes:
+        exploded_credits: ExplodedCredits table, used to take the distinct of
+            the actors.
+
     """
     exploded_credits: ExplodedCredits
     schema_: T.StructType = T.StructType(

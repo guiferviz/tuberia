@@ -32,8 +32,9 @@ plugins:
           python:
             options:
               show_source: true
-              show_if_no_docstring: true
+              show_if_no_docstring: false
               docstring_style: google
+              docstring_section_style: spacy  # table, list or spacy
 
 markdown_extensions:
     - meta

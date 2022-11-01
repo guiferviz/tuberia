@@ -23,6 +23,14 @@ class Movies(Flow):
         Actor ||--|{ ActsInMovie : acts
     ```
 
+    Attributes:
+        input_credits_path: Path to credits input file.
+        input_movies_path: Path to movies input file.
+        database: Database name in which all the tables will be created.
+        database_dir: Root path of the database. Inside this folder, a
+            folder with the same name as the database will be created. Inside
+            that folder all the tables will be placed.
+
     """
     input_credits_path: str
     input_movies_path: str

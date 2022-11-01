@@ -78,8 +78,7 @@ def _table_document(table: Table) -> str:
             ### ::: {table.__class__.__module__}.{table.__class__.__name__}
                 options:
                   show_root_heading: false
-                  show_submodules: true
-                  annotations_path: source\n\n
+                  show_submodules: true\n\n
         """
     )
     return f"{title}{api}{schema_str}"
