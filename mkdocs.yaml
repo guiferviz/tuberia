@@ -74,4 +74,4 @@ extra:
 # Page tree
 nav:
     - Home: index.md
-    - Flows: flows/*
+    - Tags: tags.md
