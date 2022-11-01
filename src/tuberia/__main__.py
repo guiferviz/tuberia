@@ -1,8 +1,8 @@
 import typer
 
-from tuberia import greet
+from tuberia import docs, greet
+from tuberia.flow import Flow
 from tuberia.spark import get_spark
-from tuberia.utils import get_flow_from_qualified_name
 
 app = typer.Typer()
 
@@ -12,7 +12,7 @@ def visualize(flow_name: str):
     """Create a mermaid.js flowchart of your flow."""
 
     print("Visualizing flow", flow_name)
-    flow_class = get_flow_from_qualified_name(flow_name)
+    flow_class = Flow.from_qualified_name(flow_name)
     flow = flow_class()  # type: ignore
     flow.visualize()
 
@@ -30,9 +30,19 @@ def run(flow_name: str):
     """Run a flow."""
 
     print("Running flow", flow_name)
-    flow_class = get_flow_from_qualified_name(flow_name)
+    flow_class = Flow.from_qualified_name(flow_name)
     flow = flow_class()  # type: ignore
     flow.run()
+
+
+@app.command()
+def doc(flow_name: str):
+    """Document a flow."""
+
+    print("Documenting a flow", flow_name)
+    flow_class = Flow.from_qualified_name(flow_name)
+    flow = flow_class()  # type: ignore
+    docs.document_flow(flow)
 
 
 @app.command()

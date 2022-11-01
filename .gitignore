@@ -1,3 +1,6 @@
+# Ignore spark database dir.
+spark_data/
+
 # Ignore local env vars (direnv)
 .envrc
 

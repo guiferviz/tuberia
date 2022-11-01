@@ -37,3 +37,6 @@ doc:
 publish-doc:
 	$(POETRY) version $(GIT_TAG)
 	$(POETRY) run mkdocs gh-deploy --force
+
+serve-doc:
+	mkdocs serve
