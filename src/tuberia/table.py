@@ -3,7 +3,10 @@ from typing import Any, Dict, List, Optional
 import inflection
 import prefect
 import pydantic
+from pyspark.sql import DataFrame
 
+from tuberia.check import Check
+from tuberia.spark import get_spark
 from tuberia.utils import freeze
 
 
@@ -41,12 +44,23 @@ class Table(pydantic.BaseModel, metaclass=MetaTable):
     def id(self) -> str:
         return self.full_name
 
+    def checks(self) -> List[Check]:
+        return []
+
     def create(self):
         df = self.define()
         self.write(df)
+        df = self.read()
+        for i in self.checks():
+            i.run(df)
+            if not i.success:
+                raise RuntimeError(f"Quality check failed: {i.report()}")
 
     def define(self):
         raise NotImplementedError()
+
+    def read(self) -> DataFrame:
+        return get_spark().table(self.full_name)
 
     def write(self, df):
         writer = df.write.format("delta")
