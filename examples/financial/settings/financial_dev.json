@@ -1,0 +1,8 @@
+{
+    "input_clients_path": "./data/clients.csv",
+    "input_products_path": "./data/products.csv",
+    "input_categories_path": "./data/cateogies.csv",
+    "input_sells_path": "./data/sells.csv",
+    "database": "financial_dv",
+    "database_dir": "./lake/databases/"
+}

@@ -1,0 +1,8 @@
+{
+    "input_clients_path": "dbfs:/mnt/landing/clients.csv",
+    "input_products_path": "dbfs:/mnt/landing/products.csv",
+    "input_categories_path": "dbfs:/mnt/landing/categories.csv",
+    "input_sells_path": "dbfs:/mnt/landing/sells.csv",
+    "database": "financial_db",
+    "database_dir": "dbfs:/mnt/gold_container/databases/"
+}
