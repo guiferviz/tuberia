@@ -5,7 +5,7 @@ import prefect
 import pydantic
 from pyspark.sql import DataFrame
 
-from tuberia.check import Check
+from tuberia.expectation import Expectation
 from tuberia.spark import get_spark
 from tuberia.utils import freeze
 
@@ -44,17 +44,16 @@ class Table(pydantic.BaseModel, metaclass=MetaTable):
     def id(self) -> str:
         return self.full_name
 
-    def checks(self) -> List[Check]:
+    def expect(self) -> List[Expectation]:
         return []
 
     def create(self):
         df = self.define()
         self.write(df)
-        df = self.read()
-        for i in self.checks():
-            i.run(df)
-            if not i.success:
-                raise RuntimeError(f"Quality check failed: {i.report()}")
+        for i in self.expect():
+            report = i.run(self)
+            if not report.success:
+                raise RuntimeError(f"Expectation failed: {report}")
 
     def define(self):
         raise NotImplementedError()

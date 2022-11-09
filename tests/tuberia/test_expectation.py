@@ -1,7 +1,7 @@
 import pyspark.sql.functions as F
 import pytest
 
-from tuberia.check import Unique
+from tuberia.expectation import PrimaryKey
 from tuberia.flow import run
 from tuberia.spark import get_spark
 from tuberia.table import Table
@@ -11,9 +11,9 @@ def test_check(test_database: str):
     class MyTable(Table):
         database: str = test_database
 
-        def checks(self):
+        def expect(self):
             return [
-                Unique(columns=["id"]),
+                PrimaryKey(columns=["id"]),
             ]
 
         def define(self):
@@ -27,9 +27,9 @@ def test_check_fail(test_database: str):
     class MyTable(Table):
         database: str = test_database
 
-        def checks(self):
+        def expect(self):
             return [
-                Unique(columns=["id"]),
+                PrimaryKey(columns=["id"]),
             ]
 
         def define(self):
