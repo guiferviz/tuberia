@@ -72,6 +72,13 @@ def _table_document(table: Table) -> str:
         for i in table.schema_:
             schema_str += f"|{i.name}|{i.dataType.typeName()}|\n"
         schema_str += "\n\n"
+    expectations = table.expect()
+    expectations_str = ""
+    if expectations:
+        expectations_str = "## Expectations\n\n| Expectation class | Description |\n|---|---|\n"
+        for i in expectations:
+            expectations_str += f"|{i.__class__.__name__}|{i.description()}|\n"
+        expectations_str += "\n\n"
     api = textwrap.dedent(
         f"""
             ## API
@@ -81,7 +88,7 @@ def _table_document(table: Table) -> str:
                   show_submodules: true\n\n
         """
     )
-    return f"{title}{api}{schema_str}"
+    return f"{title}{api}{schema_str}{expectations_str}"
 
 
 def _write_documentation_dict(documentation_dict, root_dir="docs", pprint=True):

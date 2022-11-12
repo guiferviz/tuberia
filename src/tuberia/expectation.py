@@ -17,6 +17,10 @@ class Expectation(abc.ABC):
     def run(self, table: Table) -> Report:
         raise NotImplementedError()
 
+    @abc.abstractmethod
+    def description(self) -> str:
+        raise NotImplementedError()
+
 
 class Report(pydantic.BaseModel, arbitrary_types_allowed=True):
     """Base model for expectation reports.
@@ -86,6 +90,8 @@ class CustomReport(Report, extra="allow"):
 class PrimaryKey(Expectation):
     """Expect a set of columns to uniquely identify a row.
 
+    Nulls are not considered valid values for key columns.
+
     Attributes:
         columns: Set of columns to check.
 
@@ -135,5 +141,5 @@ class PrimaryKey(Expectation):
             missing_percent=missing_count / element_count,
         )
 
-    def description(self):
+    def description(self) -> str:
         return f"Columns {self.columns} should uniquely identify a row."
