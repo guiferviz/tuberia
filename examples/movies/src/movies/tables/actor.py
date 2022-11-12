@@ -1,4 +1,5 @@
 import pyspark.sql.types as T
+from tuberia.expectation import PrimaryKey
 
 from tuberia.spark import get_spark
 from tuberia.table import Table
@@ -17,6 +18,7 @@ class Actor(Table):
             the actors.
 
     """
+
     exploded_credits: ExplodedCredits
     schema_: T.StructType = T.StructType(
         [
@@ -24,6 +26,11 @@ class Actor(Table):
             T.StructField("name", T.StringType()),
         ]
     )
+
+    def expect(self):
+        return [
+            PrimaryKey({"id"}),
+        ]
 
     def define(self):
         return (

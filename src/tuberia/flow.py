@@ -73,6 +73,10 @@ def _add_table_object(
         existing_tables_list.append(table)
 
 
+def run(tables: List[Table]):
+    run_flow(make_prefect_flow(tables))
+
+
 def make_prefect_flow(tables: List[Table]):
     with prefect.Flow("make_tables") as flow:
         existing_tasks: Dict[str, prefect.Task] = {}

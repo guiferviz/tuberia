@@ -3,7 +3,10 @@ from typing import Any, Dict, List, Optional
 import inflection
 import prefect
 import pydantic
+from pyspark.sql import DataFrame
 
+from tuberia.expectation import Expectation
+from tuberia.spark import get_spark
 from tuberia.utils import freeze
 
 
@@ -41,12 +44,22 @@ class Table(pydantic.BaseModel, metaclass=MetaTable):
     def id(self) -> str:
         return self.full_name
 
+    def expect(self) -> List[Expectation]:
+        return []
+
     def create(self):
         df = self.define()
         self.write(df)
+        for i in self.expect():
+            report = i.run(self)
+            if not report.success:
+                raise RuntimeError(f"Expectation failed: {report}")
 
     def define(self):
         raise NotImplementedError()
+
+    def read(self) -> DataFrame:
+        return get_spark().table(self.full_name)
 
     def write(self, df):
         writer = df.write.format("delta")
