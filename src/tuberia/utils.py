@@ -1,5 +1,5 @@
 import importlib
-from typing import Any
+from typing import Any, Union
 
 
 def get_module_member(module_name, member_name):
@@ -7,7 +7,7 @@ def get_module_member(module_name, member_name):
     return getattr(m, member_name)
 
 
-def freeze(obj: Any) -> Any:
+def freeze(obj: Any) -> Union[tuple, frozenset]:
     """Converts any object into a immutable data structure.
 
     An immutable data structure is hashable, so it can be used as a key in

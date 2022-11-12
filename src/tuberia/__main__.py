@@ -1,6 +1,8 @@
 import typer
+from loguru import logger
 
 from tuberia import docs, greet
+from tuberia.deployer import Deployer
 from tuberia.flow import Flow
 from tuberia.spark import get_spark
 
@@ -18,18 +20,22 @@ def visualize(flow_name: str):
 
 
 @app.command()
-def deploy(flow: str, format: str):
+def deploy(flow_name: str, deployer_name: str):
     """Deploy a flow."""
 
-    print("deploying flow", flow)
-    raise NotImplementedError()
+    logger.info(f"Deploying flow `{flow_name}` using `{deployer_name}`")
+    flow_class = Flow.from_qualified_name(flow_name)
+    flow = flow_class()  # type: ignore
+    deployer_class = Deployer.from_qualified_name(deployer_name)
+    deployer = deployer_class()  # type: ignore
+    deployer.run(flow)
 
 
 @app.command()
 def run(flow_name: str):
     """Run a flow."""
 
-    print("Running flow", flow_name)
+    logger.info(f"Running flow `{flow_name}`")
     flow_class = Flow.from_qualified_name(flow_name)
     flow = flow_class()  # type: ignore
     flow.run()
@@ -39,7 +45,7 @@ def run(flow_name: str):
 def doc(flow_name: str):
     """Document a flow."""
 
-    print("Documenting a flow", flow_name)
+    logger.info(f"Documenting flow `{flow_name}`")
     flow_class = Flow.from_qualified_name(flow_name)
     flow = flow_class()  # type: ignore
     docs.document_flow(flow)
@@ -68,7 +74,7 @@ def callback(
 
 
 def main():
-    app()
+    app(standalone_mode=False)
 
 
 if __name__ == "__main__":

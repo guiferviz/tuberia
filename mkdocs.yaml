@@ -74,4 +74,5 @@ extra:
 # Page tree
 nav:
     - Home: index.md
+    - FAQ: faq.md
     - Tags: tags.md

@@ -1,7 +1,9 @@
 import abc
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
+import inflection
 import prefect
+import pydantic
 
 from tuberia import utils
 from tuberia.base_settings import BaseSettings
@@ -16,6 +18,23 @@ class DependencyNode:
 
 
 class Flow(abc.ABC, BaseSettings):
+    class Config:
+        env_prefix = "tuberia_flow_"
+        env_json_config_name = "json_settings"
+
+    name: str = None  # type: ignore
+
+    @pydantic.validator("name", always=True)
+    def default_name(cls, name):
+        if name is None:
+            return inflection.underscore(cls.__name__)  # type: ignore
+        return name
+
+    @property
+    def full_name(self):
+        cls = self.__class__
+        return f"{cls.__module__}.{cls.__qualname__}"
+
     @staticmethod
     def from_qualified_name(name: str) -> "Flow":
         module_name, class_name = name.rsplit(".", 1)
@@ -50,7 +69,7 @@ class Flow(abc.ABC, BaseSettings):
     def make_dependency_tree(self) -> List[DependencyNode]:
         return []
 
-    def list_tables(self) -> List[Table]:
+    def dict_tables(self) -> Dict[Union[tuple, frozenset], Table]:
         pending_tables = self.define()
         tables: Dict[Any, Table] = {}
         while len(pending_tables) > 0:
@@ -59,7 +78,10 @@ class Flow(abc.ABC, BaseSettings):
             if table_freeze not in tables:
                 pending_tables.extend(table._dependencies())
                 tables[table_freeze] = table
-        return list(tables.values())
+        return tables
+
+    def list_tables(self) -> List[Table]:
+        return list(self.dict_tables().values())
 
 
 def _add_table_object(
