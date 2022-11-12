@@ -1,29 +1,50 @@
 <p align="center">
-    <img src="docs/images/logo.png" width="800">
+    <a href="https://aidictive.github.io/tuberia" target="_blank">
+        <img src="docs/images/logo.png"
+             alt="Tuberia logo"
+             width="800">
+    </a>
 </p>
-
 <p align="center">
-    <a href="https://github.com/AIdictive/tuberia/actions/workflows/cicd.yaml">
-        <img src="https://github.com/aidictive/tuberia/actions/workflows/cicd.yaml/badge.svg" alt="Tuberia CI pipeline status">
+    <a href="https://github.com/AIdictive/tuberia/actions/workflows/cicd.yaml" target="_blank">
+        <img src="https://github.com/aidictive/tuberia/actions/workflows/cicd.yaml/badge.svg"
+             alt="Tuberia CI pipeline status">
     </a>
-    <a href="https://app.codecov.io/gh/AIdictive/tuberia/">
-        <img src="https://img.shields.io/codecov/c/github/aidictive/tuberia" alt="Tuberia coverage status">
+    <a href="https://app.codecov.io/gh/AIdictive/tuberia/" target="_blank">
+        <img src="https://img.shields.io/codecov/c/github/aidictive/tuberia"
+             alt="Tuberia coverage status">
     </a>
-    <a href="https://github.com/AIdictive/tuberia/issues">
-        <img src="https://img.shields.io/bitbucket/issues/AIdictive/tuberia" alt="Tuberia issues">
+    <a href="https://github.com/AIdictive/tuberia/issues" target="_blank">
+        <img src="https://img.shields.io/bitbucket/issues/AIdictive/tuberia"
+             alt="Tuberia issues">
     </a>
-    <img src="https://img.shields.io/github/contributors/AIdictive/tuberia" alt="Tuberia contributors">
-    <img src="https://pepy.tech/badge/tuberia" alt="Tuberia total downloads">
-    <img src="https://pepy.tech/badge/tuberia/month" alt="Tuberia downloads per month">
+    <a href="https://github.com/aidictive/tuberia/graphs/contributors" target="_blank">
+        <img src="https://img.shields.io/github/contributors/AIdictive/tuberia"
+             alt="Tuberia contributors">
+    </a>
+    <a href="https://pypi.org/project/tuberia/" target="_blank">
+        <img src="https://pepy.tech/badge/tuberia"
+             alt="Tuberia total downloads">
+    </a>
+    <a href="https://pypi.org/project/tuberia/" target="_blank">
+        <img src="https://pepy.tech/badge/tuberia/month"
+             alt="Tuberia downloads per month">
+    </a>
     <br />
     Data engineering meets software engineering
 </p>
 
 ---
 
-**Documentation**: <a href="https://aidictive.github.io/tuberia" target="_blank">https://aidictive.github.io/tuberia</a>
+**Documentation**:
+<a href="https://aidictive.github.io/tuberia" target="_blank">
+    https://aidictive.github.io/tuberia
+</a>
 
-**Source Code**: <a href="https://github.com/aidictive/tuberia" target="_blank">https://github.com/aidictive/tuberia</a>
+**Source Code**:
+<a href="https://github.com/aidictive/tuberia" target="_blank">
+    https://github.com/aidictive/tuberia
+</a>
 
 ---
 
