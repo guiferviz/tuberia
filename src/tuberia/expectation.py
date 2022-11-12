@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import abc
+import operator
+from functools import reduce
 from typing import TYPE_CHECKING, Any, List, Set
 
 import pydantic
+import pyspark.sql.functions as F
 
 if TYPE_CHECKING:
     from tuberia.table import Table
@@ -31,11 +34,11 @@ class Report(pydantic.BaseModel, arbitrary_types_allowed=True):
 class RowLevelValidationReport(Report):
     """Report for expectations that evaluate a condition row by row.
 
-    Taking report fields from great expectations.
+    Taking most of the report fields from great expectations.
 
     Attributes:
         unexpected_list: A list of all values that violate the expectation.
-        unexpected_index_list: A list of the indices of the unexpected values
+        unexpected_keys_list: A list of the indices of the unexpected values
             in the column.
         element_count: The total number of values in the column.
         unexpected_count: The total count of unexpected values in the column.
@@ -48,7 +51,7 @@ class RowLevelValidationReport(Report):
     """
 
     unexpected_list: List[Any]
-    unexpected_index_list: List[Any]
+    unexpected_keys_list: List[Any]
     element_count: int
     unexpected_count: int
     unexpected_percent: float
@@ -96,21 +99,40 @@ class PrimaryKey(Expectation):
     def run(self, table: Table):
         df_key_columns = table.read().select(*self.columns)
         element_count = df_key_columns.count()
-        unique_count = df_key_columns.distinct().count()
+        any_key_column_with_nulls = reduce(
+            operator.__or__, [F.col(i).isNull() for i in self.columns]
+        )
+        unique_count = (
+            df_key_columns.groupBy(*self.columns)
+            .agg(F.count("*").alias("__count__"))
+            .filter(~any_key_column_with_nulls & (F.col("__count__") == 1))
+            .count()
+        )
+        missing_count = df_key_columns.filter(any_key_column_with_nulls).count()
         success = element_count == unique_count
         unexpected_count = element_count - unique_count
-        # return RowLevelValidationReport(
-        return CustomReport(
+        if not success:
+            unexpected_list = (
+                df_key_columns.groupBy(*self.columns)
+                .agg(F.count("*").alias("__count__"))
+                .filter(any_key_column_with_nulls | (F.col("__count__") > 1))
+                .take(20)
+            )
+            unexpected_list = [i.asDict() for i in unexpected_list]
+        else:
+            unexpected_list = []
+        return RowLevelValidationReport(
             success=success,
             expectation=self,
-            unexpected_list=None,  # type:ignore
-            unexpected_index_list=None,  # type:ignore
-            element_count=element_count,  # type:ignore
-            unexpected_count=unexpected_count,  # type:ignore
-            unexpected_percent=unexpected_count / element_count,  # type:ignore
-            unexpected_percent_nonmissing=None,  # type:ignore
-            missing_count=None,  # type:ignore
-            missing_percent=None,  # type:ignore
+            unexpected_list=unexpected_list,
+            unexpected_keys_list=unexpected_list,
+            element_count=element_count,
+            unexpected_count=unexpected_count,
+            unexpected_percent=unexpected_count / element_count,
+            unexpected_percent_nonmissing=(unexpected_count - missing_count)
+            / (element_count - missing_count),
+            missing_count=missing_count,
+            missing_percent=missing_count / element_count,
         )
 
     def description(self):
