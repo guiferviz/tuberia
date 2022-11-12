@@ -36,17 +36,45 @@
 
 ---
 
-**Documentation**:
+:books: **Documentation**:
 <a href="https://aidictive.github.io/tuberia" target="_blank">
     https://aidictive.github.io/tuberia
 </a>
 
-**Source Code**:
+:keyboard: **Source Code**:
 <a href="https://github.com/aidictive/tuberia" target="_blank">
     https://github.com/aidictive/tuberia
 </a>
 
 ---
+
+
+## :thinking_face: What is this?
+
+Tuberia is born from the need to bring the worlds of data and software
+engineering closer together. Here is a list of common problems in data
+projects:
+
+* Loooooong SQL queries impossible to understand/test.
+* A lot of duplicate code due to the difficulty of reusing it in SQL queries.
+* Lack of tests, sometimes because the used framework does not facilitate
+testing tasks.
+* Lack of documentation.
+* Discrepancies between the existing documentation and the latest deployed code.
+* A set of notebooks deployed under the Databricks Share folder.
+* A generic notebook with utility functions.
+* Use of drag-and-drop frameworks that limit the developer's creativity.
+* Months of intense work to migrate existing pipelines from one orchestrator to
+another (e.g. from Airflow to Prefect, from Databricks Jobs to Data
+Factory...).
+
+Tuberia aims to solve all these problems and many others. 
+
+
+## :nerd_face: How it works?
+
+Programming gurus will enjoy data engineering again!
+
 
 
 ## Getting started
