@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any, Dict, List, Optional
 
 import inflection
@@ -12,7 +14,8 @@ from tuberia.utils import freeze
 
 class MetaTable(pydantic.main.ModelMetaclass):
     def __new__(cls, name, bases, dct):
-        return super().__new__(cls, name, bases, dct)
+        table_object = super().__new__(cls, name, bases, dct)
+        return table_object
 
 
 class Table(pydantic.BaseModel, metaclass=MetaTable):
@@ -26,12 +29,12 @@ class Table(pydantic.BaseModel, metaclass=MetaTable):
     path: Optional[str] = None
 
     schema_: Optional[Any] = None
-    # It uses an underscore because schema already exist in pydantic.BaseModel.
+    # FIXME: It uses an underscore because schema already exist in pydantic.BaseModel.
 
     @pydantic.validator("name", always=True)
     def default_name(cls, name):
         if name is None:
-            return inflection.singularize(inflection.underscore(cls.__name__))  # type: ignore
+            return inflection.underscore(cls.__name__)  # type: ignore
         return name
 
     @property
@@ -47,7 +50,7 @@ class Table(pydantic.BaseModel, metaclass=MetaTable):
     def expect(self) -> List[Expectation]:
         return []
 
-    def create(self):
+    def run(self):
         df = self.define()
         self.write(df)
         for i in self.expect():
@@ -73,7 +76,7 @@ class Table(pydantic.BaseModel, metaclass=MetaTable):
     def freeze(self):
         return freeze(self)
 
-    def _dependencies(self) -> List["Table"]:
+    def _dependencies(self) -> List[Table]:
         dependencies: Dict[Any, Table] = {}
         for _, v in self:
             if isinstance(v, Table):
@@ -97,5 +100,5 @@ class TableTask(prefect.Task):
         self.table = table
 
     def run(self) -> Table:
-        self.table.create()
+        self.table.run()
         return self.table
