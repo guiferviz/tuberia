@@ -4,6 +4,7 @@ site_author: guiferviz
 repo_url: https://github.com/aidictive/tuberia
 repo_name: Tuberia
 strict: true
+
 theme:
     name: material
     palette:
@@ -21,10 +22,16 @@ theme:
       toggle:
         icon: material/weather-sunny
         name: Switch to light mode
+
 plugins:
     - tags:
         tags_file: tags.md
     - search
+    - macros:
+        include_dir: docs/include
+        on_error_fail: true
+        module_name: docs/macros
+
 markdown_extensions:
     - meta
     # Code highlight.
@@ -71,10 +78,12 @@ extra:
     - icon: fontawesome/brands/github
       link: https://github.com/guiferviz
 
-# Page tree
 nav:
     - Home: index.md
     - FAQ: faq.md
     - Changes: changelog.md
     - Contributing: contributing.md
+    - TEP:
+      - teps/tep00.md
+      - teps/tep01.md
     - Tags: tags.md

@@ -15,7 +15,7 @@
              alt="Tuberia coverage status">
     </a>
     <a href="https://github.com/AIdictive/tuberia/issues" target="_blank">
-        <img src="https://img.shields.io/bitbucket/issues/AIdictive/tuberia"
+        <img src="https://img.shields.io/github/issues/AIdictive/tuberia"
              alt="Tuberia issues">
     </a>
     <a href="https://github.com/aidictive/tuberia/graphs/contributors" target="_blank">
