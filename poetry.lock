@@ -539,6 +539,24 @@ i18n = ["babel (>=2.9.0)"]
 min-versions = ["babel (==2.9.0)", "click (==7.0)", "colorama (==0.4)", "ghp-import (==1.0)", "importlib-metadata (==4.3)", "jinja2 (==2.11.1)", "markdown (==3.2.1)", "markupsafe (==2.0.1)", "mergedeep (==1.3.4)", "packaging (==20.5)", "pyyaml (==5.1)", "pyyaml-env-tag (==0.1)", "typing-extensions (==3.10)", "watchdog (==2.0)"]
 
 [[package]]
+name = "mkdocs-macros-plugin"
+version = "0.7.0"
+description = "Unleash the power of MkDocs with macros and variables"
+category = "dev"
+optional = false
+python-versions = ">=3.5"
+
+[package.dependencies]
+jinja2 = "*"
+mkdocs = ">=0.17"
+python-dateutil = "*"
+pyyaml = "*"
+termcolor = "*"
+
+[package.extras]
+test = ["mkdocs-include-markdown-plugin", "mkdocs-macros-test", "mkdocs-material (>=6.2)"]
+
+[[package]]
 name = "mkdocs-material"
 version = "8.5.10"
 description = "Documentation that simply works"
@@ -1109,6 +1127,17 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
+name = "termcolor"
+version = "2.1.0"
+description = "ANSI color formatting for output in terminal"
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+
+[package.extras]
+tests = ["pytest", "pytest-cov"]
+
+[[package]]
 name = "text-unidecode"
 version = "1.3"
 description = "The most basic Text::Unidecode port"
@@ -1275,7 +1304,7 @@ pyspark = ["pyspark", "delta-spark"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "2c3278e257431172ce824de3f723dcb9f7ce0dd5b956642df9cc05daf844d09b"
+content-hash = "f8e94f2333cf11050e72ace5e7fdfd7eff71e9ded358d7669677026beed84c1c"
 
 [metadata.files]
 attrs = [
@@ -1545,6 +1574,10 @@ mergedeep = [
 mkdocs = [
     {file = "mkdocs-1.4.2-py3-none-any.whl", hash = "sha256:c8856a832c1e56702577023cd64cc5f84948280c1c0fcc6af4cd39006ea6aa8c"},
     {file = "mkdocs-1.4.2.tar.gz", hash = "sha256:8947af423a6d0facf41ea1195b8e1e8c85ad94ac95ae307fe11232e0424b11c5"},
+]
+mkdocs-macros-plugin = [
+    {file = "mkdocs-macros-plugin-0.7.0.tar.gz", hash = "sha256:9e64e1cabcf6925359de29fe54f62d5847fb455c2528c440b87f8f1240650608"},
+    {file = "mkdocs_macros_plugin-0.7.0-py3-none-any.whl", hash = "sha256:96bdabeb98b96139544f0048ea2f5cb80c7befde6b21e94c6d4596c22774cbcf"},
 ]
 mkdocs-material = [
     {file = "mkdocs_material-8.5.10-py3-none-any.whl", hash = "sha256:51760fa4c9ee3ca0b3a661ec9f9817ec312961bb84ff19e5b523fdc5256e1d6c"},
@@ -1896,6 +1929,10 @@ tabulate = [
 tblib = [
     {file = "tblib-1.7.0-py2.py3-none-any.whl", hash = "sha256:289fa7359e580950e7d9743eab36b0691f0310fce64dee7d9c31065b8f723e23"},
     {file = "tblib-1.7.0.tar.gz", hash = "sha256:059bd77306ea7b419d4f76016aef6d7027cc8a0785579b5aad198803435f882c"},
+]
+termcolor = [
+    {file = "termcolor-2.1.0-py3-none-any.whl", hash = "sha256:91dd04fdf661b89d7169cefd35f609b19ca931eb033687eaa647cef1ff177c49"},
+    {file = "termcolor-2.1.0.tar.gz", hash = "sha256:b80df54667ce4f48c03fe35df194f052dc27a541ebbf2544e4d6b47b5d6949c4"},
 ]
 text-unidecode = [
     {file = "text-unidecode-1.3.tar.gz", hash = "sha256:bad6603bb14d279193107714b288be206cac565dfa49aa5b105294dd5c4aab93"},
