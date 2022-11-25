@@ -88,31 +88,38 @@ table.
 
 ```python
 import pyspark.sql.functions as F
+import tuberia as tb
 
-from tuberia import PySparkTable, run
 
-
-class Range(PySparkTable):
+class Range(tb.spark.Table):
     """Table with numbers from 1 to `n`.
 
     Attribute:
         n: Max number in table.
 
     """
+    class schema:
+        id = tb.column(int)
+
     n: int = 10
 
     def df(self):
         return self.spark.range(self.n).withColumn("id", F.col(self.schema.id)
 
 
-class DoubleRange(PySparkTable):
+class DoubleRange(tb.spark.Table):
+    class schema:
+        id = tb.column(int)
+
     range: Range = Range()
 
     def df(self):
-        return self.range.read().withColumn("id", F.col("id") * 2)
+        return self.range.read().withColumn(
+            self.schema.id, F.col(self.range.schema.id) * 2
+        )
 
 
-run(DoubleRange())
+tb.run(DoubleRange())
 ```
 
 !!! warning

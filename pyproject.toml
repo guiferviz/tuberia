@@ -46,6 +46,8 @@ pyspark = { version = "3.3.0", optional = true }
 delta-spark = { version = "2.1.0", optional = true }
 makefun = "^1.14.0"
 inflection = "^0.5.1"
+databricks-cli = "^0.17.3"
+networkx = "^2.8.8"
 
 [tool.poetry.extras]
 pyspark = ["pyspark", "delta-spark"]

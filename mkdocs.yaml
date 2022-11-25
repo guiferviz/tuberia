@@ -59,6 +59,7 @@ markdown_extensions:
     # Superfences admonition.
     - admonition
     - pymdownx.details
+    - md_in_html
 
 extra_javascript:
   - javascripts/mathjax.js
