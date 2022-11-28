@@ -48,6 +48,7 @@ makefun = "^1.14.0"
 inflection = "^0.5.1"
 databricks-cli = "^0.17.3"
 networkx = "^2.8.8"
+typing-extensions = "^4.4.0"
 
 [tool.poetry.extras]
 pyspark = ["pyspark", "delta-spark"]
@@ -62,13 +63,17 @@ pdbpp = "^0.10.3"
 # Static analyzers / formatters.
 flake8 = "^5.0.4"
 Flake8-pyproject = "^1.1.0.post0"
-pyright = "^0.0.13"
+pyright = "^1.1.281"
 black = "^22.1.0"
 isort = "^5.10.1"
 pre-commit = "^2.18.1"
 # Docs.
 mkdocs-material = "^8.2.9"
 mkdocs-macros-plugin = "^0.7.0"
+
+
+[tool.poetry.group.develop.dependencies]
+mypy = "^0.991"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

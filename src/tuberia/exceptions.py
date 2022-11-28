@@ -1,0 +1,2 @@
+class TuberiaException(Exception):
+    pass
