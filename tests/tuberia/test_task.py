@@ -3,7 +3,6 @@ from typing import Any
 import pydantic
 import pytest
 
-from tuberia.base_model import BaseModel
 from tuberia.exceptions import TuberiaException
 from tuberia.task import Task, dependency_tree
 
@@ -108,7 +107,7 @@ def test_task_inheritance_from_none_dataclass_to_python_dataclass():
             return self.super_value * 2
 
         def __hash__(self):
-            return None
+            return 0
 
     class MySubClass(MySuperTask, dataclass="python"):
         sub_value: int
@@ -122,7 +121,7 @@ def test_task_inheritance_from_none_dataclass_to_python_dataclass():
     assert task.super_value == 6
     assert task.super_method() == 12
     assert task.another_super_value == 4
-    assert hash(task) is None
+    assert hash(task) == 0
 
 
 def test_task_inheritance_from_python_dataclass_to_none_dataclass():
@@ -165,7 +164,7 @@ def test_dependencies_with_python_dataclass(dataclass):
     my_task_0 = MyTask0()
     my_task_1 = MyTask1()
     my_task_2 = MyTask2(my_task_0, my_task_1)
-    assert my_task_2.dependencies() == [my_task_0]
+    assert my_task_2._task_descriptor.get_dependencies(my_task_2) == [my_task_0]
 
 
 def test_hash_with_dataclass(dataclass):
@@ -275,19 +274,6 @@ def test_hash_with_non_hashable_types_different_order():
     assert hash(task0) == hash(task1)
 
 
-def test_hash_with_hashable_classes_that_use_id_as_hash():
-    class MyTask(Task):
-        def __init__(self, a):
-            self.a = a
-
-    class ClassWithHashNotImplemented:
-        pass
-
-    task = MyTask(ClassWithHashNotImplemented())
-    with pytest.raises(RuntimeError, match="__hash__ method not implemented.*"):
-        assert hash(task)
-
-
 def test_eq():
     class MyTask(Task):
         def __init__(self, a, b):
@@ -306,8 +292,12 @@ def test_sha1_sortable_keys():
 
     task0 = MyTask({"a": 1, "b": 2})
     task1 = MyTask({"b": 2, "a": 1})
-    expected_sha1 = "761be80ef3847291b2920a377accccec28d64278"
-    assert task0._sha1() == task1._sha1() == expected_sha1
+    expected_sha1 = "7b4107fb188b57159236465554f2da9da3f769f7"
+    assert (
+        task0._task_descriptor.get_sha1(task0)
+        == task1._task_descriptor.get_sha1(task1)
+        == expected_sha1
+    )
 
 
 def test_sha1_sets():
@@ -317,8 +307,12 @@ def test_sha1_sets():
 
     task0 = MyTask({"b", "a"})
     task1 = MyTask({"a", "b"})
-    expected_sha1 = "abad9ab325933dfd907c39d10b76f593b52468e2"
-    assert task0._sha1() == task1._sha1() == expected_sha1
+    expected_sha1 = "75c451fdcfe55993ecdc664e6c7641809ffd51dc"
+    assert (
+        task0._task_descriptor.get_sha1(task0)
+        == task1._task_descriptor.get_sha1(task1)
+        == expected_sha1
+    )
 
 
 def test_sha1_frozensets():
@@ -328,8 +322,12 @@ def test_sha1_frozensets():
 
     task0 = MyTask(frozenset(["b", "a"]))
     task1 = MyTask(frozenset(["a", "b"]))
-    expected_sha1 = "abad9ab325933dfd907c39d10b76f593b52468e2"
-    assert task0._sha1() == task1._sha1() == expected_sha1
+    expected_sha1 = "85abc54e96173bb75c24b9ca3a93e8b8e578d7c6"
+    assert (
+        task0._task_descriptor.get_sha1(task0)
+        == task1._task_descriptor.get_sha1(task1)
+        == expected_sha1
+    )
 
 
 def test_sha1_fails_when_no_sortable_elements_are_found():
@@ -348,21 +346,23 @@ def test_sha1_fails_when_no_sortable_elements_are_found():
         {HashableButNotSortable({"a": "b"}), HashableButNotSortable({"a": "b"})}
     )
     with pytest.raises(TuberiaException):
-        task._sha1()
+        task._task_descriptor.get_sha1(task)
 
 
 def test_sha1_float_is_not_eq_to_int(value_task):
     task0 = value_task(1)
     task1 = value_task(1.0)
-    assert task0._sha1() != task1._sha1()
+    assert task0._task_descriptor.get_sha1(
+        task0
+    ) != task1._task_descriptor.get_sha1(task1)
 
 
 def test_id(value_task, mocker):
     task = value_task(1)
-    assert task.id == "a858fc4c74314d95d9dac93a19017d146cd3bf90"
+    assert task.id == "1072d23672244cbcdda765dd1c58791ad19cde6a"
     task.id
     task.value = 2
-    assert task.id == "92ce239c19cae94525bdaeca6f8d0d09a08fd511"
+    assert task.id == "ee78355c16d5b1163be14f9aa0b6bea56e110e10"
 
 
 def test_dependency_tree():
@@ -370,13 +370,17 @@ def test_dependency_tree():
         def __init__(self, value: int):
             self.value = value
 
-    class Task1(Task, BaseModel):
+    class Task1(Task):
         def __init__(self, previous_task: Task0, another_previous_task: Task0):
             self.previous_task = previous_task
             self.another_previous_task = another_previous_task
 
-    tree = dependency_tree([Task1(Task0(0), Task0(1))])
-    assert len(tree.nodes) == 3
+    task0_0 = Task0(0)
+    task0_1 = Task0(1)
+    task1 = Task1(Task0(0), Task0(1))
+    tree = dependency_tree([task1])
+    assert set(tree.nodes) == {task0_0, task0_1, task1}
+    assert set(tree.edges) == {(task0_0, task1), (task0_1, task1)}
 
 
 def test_dataclasses_are_not_used_by_default():
@@ -385,3 +389,40 @@ def test_dataclasses_are_not_used_by_default():
 
     task = MyTask()
     assert task.__dataclass_type__ is None
+
+
+def test_hash_with_different_classes_different_fields():
+    class MyTask(Task, dataclass="python"):  # type: ignore
+        a: str
+
+    task0 = MyTask("a")
+
+    class MyTask(Task, dataclass="python"):
+        b: str
+
+    task1 = MyTask("a")
+
+    assert hash(task0) != hash(task1)
+    with pytest.raises(NotImplementedError):
+        assert task0 == task1
+
+
+def test_hash_with_different_classes_same_fields():
+    def my_task_0():
+        class MyTask(Task, dataclass="python"):
+            a: str
+
+        return MyTask
+
+    def my_task_1():
+        class MyTask(Task, dataclass="python"):
+            a: str
+
+        return MyTask
+
+    task0 = my_task_0()("a")
+    task1 = my_task_1()("a")
+
+    assert hash(task0) != hash(task1)
+    with pytest.raises(NotImplementedError):
+        assert task0 == task1
