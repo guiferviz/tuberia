@@ -93,7 +93,7 @@ class TaskDescriptor:
         )
 
     @classmethod
-    def get_sha1(cls, task: Task):
+    def get_json(cls, task: Task, sort=False):
         class CustomEncoder(json.JSONEncoder):
             def default(self, obj):
                 if isinstance(obj, (set, frozenset)):
@@ -108,7 +108,7 @@ class TaskDescriptor:
         try:
             json_str = json.dumps(
                 task._task_descriptor.get_public_tuple(task),
-                sort_keys=True,
+                sort_keys=sort,
                 ensure_ascii=True,
                 cls=CustomEncoder,
             )
@@ -117,7 +117,11 @@ class TaskDescriptor:
                 f"Not able to hash {type(task)} in a deterministic way."
                 "Overwrite the id property or make objects JSON serializable."
             ) from e
-        return sha1(json_str)
+        return json_str
+
+    @classmethod
+    def get_sha1(cls, task: Task) -> str:
+        return sha1(task._task_descriptor.get_json(task, sort=True))
 
     @classmethod
     def get_dependencies(cls, task: Task) -> List[Task]:
@@ -160,24 +164,24 @@ class Task:
 
     @property
     @lru_cache
-    def id(self):
+    def id(self) -> str:
         return self._task_descriptor.get_sha1(self)
 
     def run(self):
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def __eq__(self, other: Any):
         if self.__class__ == other.__class__:
-            return self._task_descriptor.get_public_tuple(
-                self
-            ) == other._task_descriptor.get_public_tuple(other)
+            self_tuple = self._task_descriptor.get_public_tuple(self)
+            other_tuple = other._task_descriptor.get_public_tuple(other)
+            return self_tuple == other_tuple
         raise NotImplementedError
 
     def __hash__(self):
         return hash(self._task_descriptor.get_hashable_data_structure(self))
 
 
-def sha1(value: str):
+def sha1(value: str) -> str:
     m = hashlib.sha1()
     m.update(value.encode())
     return m.hexdigest()
