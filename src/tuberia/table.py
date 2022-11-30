@@ -51,14 +51,14 @@ class Table(pydantic.BaseModel, metaclass=MetaTable):
         return []
 
     def run(self):
-        df = self.define()
+        df = self.df()
         self.write(df)
         for i in self.expect():
             report = i.run(self)
             if not report.success:
                 raise RuntimeError(f"Expectation failed: {report}")
 
-    def define(self):
+    def df(self):
         raise NotImplementedError()
 
     def read(self) -> DataFrame:

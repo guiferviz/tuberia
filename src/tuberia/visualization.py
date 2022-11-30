@@ -62,9 +62,14 @@ def flow_to_mermaid_code(
 def networkx_to_mermaid(G: Graph) -> str:
     graph = ["graph TD"]
     for i in G.nodes:
-        graph.append(f"{TAB}{hash(i)}[{i.__class__.__name__}]")
+        attributes = G.nodes[i]
+        name = attributes.get("name", i.__class__.__name__)
+        id = attributes.get("id", i.id)
+        graph.append(f"{TAB}{id}[{name}]")
     for i, j in G.edges:
-        graph.append(f"{TAB}{hash(i)} --> {hash(j)}")
+        id_i = G.nodes[i].get("id", i.id)
+        id_j = G.nodes[j].get("id", j.id)
+        graph.append(f"{TAB}{id_i} --> {id_j}")
     return "\n".join(graph)
 
 

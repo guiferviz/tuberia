@@ -5,14 +5,15 @@ import json
 from dataclasses import dataclass as python_dataclass
 from dataclasses import fields
 from functools import lru_cache
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Tuple
 
 import networkx as nx
 from networkx.classes.digraph import DiGraph
 from pydantic.dataclasses import dataclass as pydantic_dataclass
-from typing_extensions import dataclass_transform
 
 from tuberia.exceptions import TuberiaException
+
+# from typing_extensions import dataclass_transform
 
 
 def is_private_attribute_name(name):
@@ -39,10 +40,10 @@ def object_to_tuple_of_tuples(
     obj: Any,
     include_class_name: bool = True,
     fields: Optional[List[str]] = None,
-):
+) -> Tuple[Tuple[str, str], ...]:
     if fields is None:
         fields = list(vars(obj).keys())
-    class_name = tuple()
+    class_name: Tuple[Tuple[str, str], ...] = tuple()
     if include_class_name:
         class_name = tuple(
             [
@@ -145,7 +146,7 @@ class TaskDescriptor:
         )
 
 
-@dataclass_transform()
+# @dataclass_transform()
 class Task:
     __dataclass_type__: Optional[Literal["python", "pydantic"]]
     _task_descriptor: TaskDescriptor = TaskDescriptor()

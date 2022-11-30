@@ -93,9 +93,9 @@ def _table_document(table: Table) -> str:
 
 def _write_documentation_dict(documentation_dict, root_dir="docs", pprint=True):
     if pprint:
-        import pprint
+        import pprint as pprint_module
 
-        pprint.pprint(documentation_dict)
+        pprint_module.pprint(documentation_dict)
     else:
         pending_dicts: List[Tuple[str, dict]] = [(root_dir, documentation_dict)]
         while len(pending_dicts):

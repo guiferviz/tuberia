@@ -49,6 +49,7 @@ inflection = "^0.5.1"
 databricks-cli = "^0.17.3"
 networkx = "^2.8.8"
 typing-extensions = "^4.4.0"
+varname = "^0.10.0"
 
 [tool.poetry.extras]
 pyspark = ["pyspark", "delta-spark"]
@@ -70,6 +71,7 @@ pre-commit = "^2.18.1"
 # Docs.
 mkdocs-material = "^8.2.9"
 mkdocs-macros-plugin = "^0.7.0"
+cruft = "^2.11.1"
 
 
 [tool.poetry.group.develop.dependencies]
@@ -123,3 +125,13 @@ count = true
 show-source = true
 # Count the number of occurrences of each error/warning code and print a report.
 statistics = true
+
+[tool.coverage.report]
+# Regexes for lines to exclude from coverage
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "except ImportError",
+    'if __name__ == "__main__":',
+    "@overload"
+]
