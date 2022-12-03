@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import inspect
 import json
 from dataclasses import dataclass as python_dataclass
 from dataclasses import fields
@@ -8,7 +9,7 @@ from functools import lru_cache
 from typing import Any, Dict, List, Literal, Optional, Tuple
 
 import networkx as nx
-from networkx.classes.digraph import DiGraph
+from pydantic.dataclasses import Callable
 from pydantic.dataclasses import dataclass as pydantic_dataclass
 
 from tuberia.exceptions import TuberiaException
@@ -63,6 +64,8 @@ def to_hashable_data_structure(obj: Any):
         )
     elif isinstance(obj, (set, list, tuple)):
         return tuple([to_hashable_data_structure(i) for i in obj])
+    elif inspect.ismethod(obj) or inspect.isfunction(obj):
+        return inspect.getsource(obj)
     elif hasattr(obj, "__dict__"):
         return object_to_tuple_of_tuples(obj)
     return obj
@@ -79,7 +82,7 @@ def public_fields(dataclass):
 class TaskDescriptor:
     @classmethod
     def get_public_fields(cls, task: Task):
-        if task.__dataclass_type__ is None:
+        if getattr(task, "__dataclass_type__", None) is None:
             all_fields = list(vars(task).keys())
         else:
             all_fields = [i.name for i in fields(task)]
@@ -101,6 +104,8 @@ class TaskDescriptor:
                     return list(sorted(obj))
                 elif is_task(obj):
                     return obj.id
+                elif inspect.ismethod(obj) or inspect.isfunction(obj):
+                    return inspect.getsource(obj)
                 # TODO: serialize arbitrary objects.
                 # elif isinstance(obj, object):
                 #    return vars(obj)
@@ -148,20 +153,20 @@ class TaskDescriptor:
 
 # @dataclass_transform()
 class Task:
-    __dataclass_type__: Optional[Literal["python", "pydantic"]]
+    # __dataclass_type__: Optional[Literal["python", "pydantic"]]
     _task_descriptor: TaskDescriptor = TaskDescriptor()
 
-    def __init_subclass__(
-        cls, dataclass: Optional[Literal["python", "pydantic"]] = None
-    ):
-        cls.__dataclass_type__ = dataclass
-        if dataclass == "python":
-            return python_dataclass(eq=False)(cls)
-        elif dataclass == "pydantic":
-            return pydantic_dataclass(eq=False)(cls)
-        elif dataclass is None:
-            return cls
-        raise ValueError(f"Unknown dataclass value `{dataclass}`")
+    # def __init_subclass__(
+    #    cls, dataclass: Optional[Literal["python", "pydantic"]] = None
+    # ):
+    #    cls.__dataclass_type__ = dataclass
+    #    if dataclass == "python":
+    #        return python_dataclass(eq=False)(cls)
+    #    elif dataclass == "pydantic":
+    #        return pydantic_dataclass(eq=False)(cls)
+    #    elif dataclass is None:
+    #        return cls
+    #    raise ValueError(f"Unknown dataclass value `{dataclass}`")
 
     @property
     @lru_cache
@@ -169,7 +174,7 @@ class Task:
         return self._task_descriptor.get_sha1(self)
 
     def run(self):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def __eq__(self, other: Any):
         if self.__class__ == other.__class__:
@@ -182,13 +187,22 @@ class Task:
         return hash(self._task_descriptor.get_hashable_data_structure(self))
 
 
+class FunctionTask(Task):
+    def __init__(self, function: Callable):
+        self.function = function
+        self.full_name = function.__name__
+
+    def run(self):
+        self.function()
+
+
 def sha1(value: str) -> str:
     m = hashlib.sha1()
     m.update(value.encode())
     return m.hexdigest()
 
 
-def dependency_tree(tasks: List[Task]) -> DiGraph:
+def dependency_graph(tasks: List[Task]) -> nx.DiGraph:
     G = nx.DiGraph()
     pending_tasks = tasks
     visited = set()
@@ -206,3 +220,25 @@ def dependency_tree(tasks: List[Task]) -> DiGraph:
             pending_tasks.append(i)
         visited.add(task)
     return G
+
+
+def dag(tasks: List[Task]) -> nx.DiGraph:
+    G = dependency_graph(tasks)
+    if not nx.is_directed_acyclic_graph(G):
+        raise ValueError("not a directed acyclic graph")
+    return G
+
+
+def topological_sort_grouped(G):
+    # Taken from https://stackoverflow.com/questions/56802797/digraph-parallel-ordering
+    indegree_map = {v: d for v, d in G.in_degree() if d > 0}
+    zero_indegree = [v for v, d in G.in_degree() if d == 0]
+    while zero_indegree:
+        yield zero_indegree
+        new_zero_indegree = []
+        for v in zero_indegree:
+            for _, child in G.edges(v):
+                indegree_map[child] -= 1
+                if not indegree_map[child]:
+                    new_zero_indegree.append(child)
+        zero_indegree = new_zero_indegree

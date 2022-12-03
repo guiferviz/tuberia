@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 class Expectation(abc.ABC):
     @abc.abstractmethod
-    def run(self, table: Table) -> ExpectationReport:
+    def run(self, table: Table) -> Report:
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -22,7 +22,7 @@ class Expectation(abc.ABC):
         raise NotImplementedError()
 
 
-class ExpectationReport(pydantic.BaseModel, arbitrary_types_allowed=True):
+class Report(pydantic.BaseModel, arbitrary_types_allowed=True):
     """Base model for expectation reports.
 
     Attributes:
@@ -35,7 +35,7 @@ class ExpectationReport(pydantic.BaseModel, arbitrary_types_allowed=True):
     expectation: Expectation
 
 
-class RowLevelValidationReport(ExpectationReport):
+class RowLevelValidationReport(Report):
     """Report for expectations that evaluate a condition row by row.
 
     Taking most of the report fields from great expectations.
@@ -64,7 +64,7 @@ class RowLevelValidationReport(ExpectationReport):
     missing_percent: float
 
 
-class TableLevelValidationReport(ExpectationReport):
+class TableLevelValidationReport(Report):
     """Report for expectations that run aggregations over the full table.
 
     Taking report fields from great expectations.
@@ -83,7 +83,7 @@ class TableLevelValidationReport(ExpectationReport):
     missing_percent: float
 
 
-class CustomReport(ExpectationReport, extra="allow"):
+class CustomReport(Report, extra="allow"):
     pass
 
 

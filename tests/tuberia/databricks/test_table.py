@@ -1,9 +1,12 @@
 from datetime import date
 
+import matplotlib.pyplot as plt
+import networkx as nx
 import pyspark.sql.types as T
 import pytest
 
 from tuberia.databricks.table import Table
+from tuberia.flow import Flow
 from tuberia.schema import column
 
 
@@ -116,7 +119,6 @@ class TestsTableFlows:
         from tuberia.databricks.table import Table
         from tuberia.expectation import PrimaryKey
         from tuberia.schema import column
-        from tuberia.task import Task, dependency_tree
         from tuberia.visualization import open_in_browser
 
         class Range(Table):
@@ -169,8 +171,9 @@ class TestsTableFlows:
                     self.schema.id, F.col(self.range.schema.id) * self.factor
                 )
 
-        class Flow(Task):
-            def __init__(self, database: str, factors: List[int]):
+        class MyFlow(Flow):
+            def __init__(self, database: str, factors: List[int], **kwargs):
+                super().__init__(**kwargs)
                 double_ranges = []
                 for i in factors:
                     range_table = Range(n=10, database=database)
@@ -181,9 +184,16 @@ class TestsTableFlows:
                     )
                 self.double_ranges = double_ranges
 
-        G = dependency_tree([Flow("db", factors=[2, 4, 6])])
+        flow = MyFlow("db", factors=[2, 4, 6])
+        flow.plot()
+        flow.run()
+        """
+        G = flow.dag()
+        nx.draw(G, with_labels=True)
+        plt.show()
         for i, attr in G.nodes.items():
             full_name = getattr(i, "full_name", None)
             if full_name:
                 attr["name"] = full_name
         open_in_browser(G)
+        """
