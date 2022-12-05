@@ -1,6 +1,5 @@
 from datetime import date
 
-import matplotlib.pyplot as plt
 import networkx as nx
 import pyspark.sql.types as T
 import pytest
@@ -144,16 +143,13 @@ class TestsTableFlows:
                     "id", F.col(self.schema.id)
                 )
 
-        class MultiplyFactorRange(Table):
+        class MultiplyFactorRange(Range):
             """Double a Range table.
 
             Attributes:
                 range: Table to double.
 
             """
-
-            class schema:
-                id = column(int)
 
             def __init__(
                 self, range: Range, factor: float = 2, *args, **kwargs
@@ -162,9 +158,6 @@ class TestsTableFlows:
                 self.range = range
                 self.factor = factor
                 self.name = f"{self.name}_factor_{factor}"
-
-            def expect(self):
-                yield PrimaryKey({self.schema.id})
 
             def df(self):
                 return self.range.read().withColumn(
@@ -179,18 +172,19 @@ class TestsTableFlows:
                     range_table = Range(n=10, database=database)
                     double_ranges.append(
                         MultiplyFactorRange(
-                            range_table, factor=i, database=database
+                            MultiplyFactorRange(
+                                range_table, factor=i, database=database
+                            ),
+                            factor=i,
+                            database=database,
                         )
                     )
                 self.double_ranges = double_ranges
 
         flow = MyFlow("db", factors=[2, 4, 6])
         flow.plot()
-        flow.run()
         """
         G = flow.dag()
-        nx.draw(G, with_labels=True)
-        plt.show()
         for i, attr in G.nodes.items():
             full_name = getattr(i, "full_name", None)
             if full_name:

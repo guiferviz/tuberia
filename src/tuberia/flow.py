@@ -37,16 +37,13 @@ class Flow(Task):
         new_G = nx.DiGraph()
         new_G.add_edge(pre_run, subgraph)
         new_G.add_edge(subgraph, post_run)
-        return flatten_subgraphs(new_G)
+        return flatten_subgraph(new_G, subgraph)
 
     def run(self):
         G = self.dag()
         for i in topological_sort_grouped(G):
-            print(i)
-            """
             for j in i:
                 j.run()
-            """
 
     def post_run(self):
         pass
@@ -56,22 +53,21 @@ class Flow(Task):
         open_in_browser(G)
 
 
-def flatten_subgraphs(G: nx.DiGraph):
-    for i in list(G.nodes):
-        if isinstance(i, nx.DiGraph):
-            # Predecessors.
-            first_tasks = [j for j in i.nodes if i.in_degree(j) == 0]
-            predecessors = list(G.predecessors(i))
-            for j, k in product(predecessors, first_tasks):
-                G.add_edge(j, k)
-            # Successors.
-            successors = list(G.successors(i))
-            last_tasks = [j for j in i.nodes if i.out_degree(j) == 0]
-            for j, k in product(last_tasks, successors):
-                G.add_edge(j, k)
-            # Add all edges and nodes.
-            G.add_nodes_from(i.nodes)
-            G.add_edges_from(i.edges)
-            # Remove subgraph.
-            G.remove_node(i)
+def flatten_subgraph(G: nx.DiGraph, subgraph: nx.DiGraph):
+    assert subgraph in G
+    # Predecessors.
+    first_tasks = [j for j in subgraph.nodes if subgraph.in_degree(j) == 0]
+    predecessors = list(G.predecessors(subgraph))
+    for j, k in product(predecessors, first_tasks):
+        G.add_edge(j, k)
+    # Successors.
+    successors = list(G.successors(subgraph))
+    last_tasks = [j for j in subgraph.nodes if subgraph.out_degree(j) == 0]
+    for j, k in product(last_tasks, successors):
+        G.add_edge(j, k)
+    # Add all edges and nodes.
+    G.add_nodes_from(subgraph.nodes)
+    G.add_edges_from(subgraph.edges)
+    # Remove subgraph.
+    G.remove_node(subgraph)
     return G

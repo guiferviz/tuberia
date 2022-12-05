@@ -215,7 +215,7 @@ class TestsBaseModel:
         with pytest.raises(
             pydantic.ValidationError, match="value is not a valid integer"
         ) as exception:
-            MyBaseModel(a="a")
+            MyBaseModel(a="a")  # type: ignore
         errors = exception.value.errors()
         assert len(errors) == 1
         assert errors[0]["type"] == "type_error.integer"
@@ -225,16 +225,16 @@ class TestsBaseModel:
             a: int
 
         with pytest.raises(pydantic.ValidationError) as exception:
-            MyBaseModel()
+            MyBaseModel()  # type: ignore
         errors = exception.value.errors()
         assert len(errors) == 1
         assert errors[0]["type"] == "value_error.missing"
 
-    @pytest.mark.xfail
+    @pytest.mark.xfail(strict=True)
     def test_no_error_if_overwrite_schema_attribute(self):
         class MyBaseModel(BaseModel):
             schema: int = 1
-            json: str
+            json: str = ""
 
         MyBaseModel()
 
@@ -269,3 +269,50 @@ class TestsBaseModel:
 
         model = MySubBaseModel()
         assert model.name == "my_name_esp"
+
+    def test_root_validators_are_working_fine(self):
+        class MyBaseModel(BaseModel):
+            name: str
+
+            @pydantic.root_validator()
+            def format_name(cls, values):
+                if "name" in values:
+                    values["name"] = values.get("name").format(**values)
+                return values
+
+        class MySubBaseModel(MyBaseModel):
+            country: str = "esp"
+            name: str = "my_name_{country}"
+
+        model = MySubBaseModel()
+        assert model.name == "my_name_esp"
+
+    def test_create_attributes_in_init(self):
+        class MyBaseModel(BaseModel):
+            name: str = pydantic.Field(default_factory=lambda: "dynamic")
+
+            def __init__(self, name_init: str):
+                # If we do not call super init here name would be a class
+                # attribute instead of the string "dynamic".
+                super().__init__()
+                self.name_init = name_init
+
+        model = MyBaseModel("name_init")
+        assert model.name == "dynamic"
+        assert model.name_init == "name_init"
+
+    def test_create_property_in_subclass_with_validator(self):
+        class MySuper(BaseModel):
+            name: str = "super"
+
+            @pydantic.validator("name", always=True)
+            def format_name(cls, value):
+                return value.upper()
+
+        class MyBase(MySuper):
+            @property
+            def name(self):
+                return "base"
+
+        model = MyBase(name="init")
+        assert model.name == "base"

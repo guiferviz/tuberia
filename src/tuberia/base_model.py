@@ -1,11 +1,12 @@
 import inspect
-from typing import Any
+from typing import Any, List, Optional
 
 import pydantic
 from pydantic.class_validators import (
     ROOT_VALIDATOR_CONFIG_KEY,
     VALIDATOR_CONFIG_KEY,
 )
+from typing_extensions import dataclass_transform
 
 
 def get_annotations(type_object):
@@ -22,7 +23,7 @@ def is_property(member):
     return isinstance(member, property)
 
 
-def get_attributes(type_object):
+def get_attributes(type_object, properties=True):
     """Return all attributes defined in `task_class` and all superclasses.
 
     The output is a dictionary with the name of the attribute as key and a
@@ -41,35 +42,64 @@ def get_attributes(type_object):
             attributes[k] = (v, superclass_vars.get(k, ...))
         for i in inspect.getmembers(superclass, is_property):
             property_name = i[0]
+            if is_private_attribute_name(property_name):
+                continue
             return_type = get_annotations(i[1].fget).get("return", Any)
-            attributes[property_name] = (return_type, property)
+            if property_name in attributes and attributes[property_name] != (
+                return_type,
+                property,
+            ):
+                del attributes[property_name]
+            if properties:
+                attributes[property_name] = (return_type, property)
     return attributes
 
 
-def get_validators(type_object):
+def get_validators(
+    type_object, root=False, attributes: Optional[List[str]] = None
+):
     validators = {}
     for superclass in reversed(inspect.getmro(type_object)):
         for k, v in vars(superclass).items():
-            validator = getattr(v, VALIDATOR_CONFIG_KEY, None)
-            root_validator = getattr(v, ROOT_VALIDATOR_CONFIG_KEY, None)
-            validator = validator or root_validator
-            if validator:
+            validator_config_key = (
+                ROOT_VALIDATOR_CONFIG_KEY if root else VALIDATOR_CONFIG_KEY
+            )
+            validator = getattr(v, validator_config_key, None)
+            if validator and root:
                 validators[k] = validator
+            elif validator and not root:
+                if attributes is not None:
+                    validator = list(validator)
+                    validator[0] = tuple(
+                        i for i in validator[0] if i in attributes
+                    )
+                    validator = tuple(validator)
+                if validator[0]:
+                    validators[k] = validator
     return validators
 
 
+@dataclass_transform()
 class BaseModel:
     __pydantic_model__: pydantic.BaseModel
 
     def __init__(self, **kwargs):
-        attributes = get_attributes(self.__class__)
-        validators = get_validators(self.__class__)
+        attributes = get_attributes(self.__class__, properties=False)
+        validators = get_validators(
+            self.__class__, attributes=list(attributes.keys())
+        )
         validators = {
             k: pydantic.validator(*v[0], allow_reuse=True, always=v[1].always)(
                 v[1].func
             )
             for k, v in validators.items()
         }
+        root_validators = get_validators(self.__class__, root=True)
+        root_validators = {
+            k: pydantic.root_validator(allow_reuse=True)(v.func)
+            for k, v in root_validators.items()
+        }
+        validators.update(root_validators)
         self.__pydantic_model__ = pydantic.create_model(
             self.__class__.__name__,
             **{k: v for k, v in attributes.items() if v[1] != property},

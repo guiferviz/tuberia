@@ -14,8 +14,6 @@ from pydantic.dataclasses import dataclass as pydantic_dataclass
 
 from tuberia.exceptions import TuberiaException
 
-# from typing_extensions import dataclass_transform
-
 
 def is_private_attribute_name(name):
     return name.startswith("_")
@@ -151,7 +149,6 @@ class TaskDescriptor:
         )
 
 
-# @dataclass_transform()
 class Task:
     # __dataclass_type__: Optional[Literal["python", "pydantic"]]
     _task_descriptor: TaskDescriptor = TaskDescriptor()
