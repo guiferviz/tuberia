@@ -23,7 +23,9 @@ def is_property(member):
     return isinstance(member, property)
 
 
-def get_attributes(type_object, properties=True):
+def get_attributes(
+    type_object, properties=True, only_properties_with_set=False
+):
     """Return all attributes defined in `task_class` and all superclasses.
 
     The output is a dictionary with the name of the attribute as key and a
@@ -50,7 +52,9 @@ def get_attributes(type_object, properties=True):
                 property,
             ):
                 del attributes[property_name]
-            if properties:
+            if properties and (
+                not only_properties_with_set or i[1].fset is not None
+            ):
                 attributes[property_name] = (return_type, property)
     return attributes
 
@@ -79,7 +83,7 @@ def get_validators(
     return validators
 
 
-@dataclass_transform()
+@dataclass_transform(kw_only_default=True)
 class BaseModel:
     __pydantic_model__: pydantic.BaseModel
 
@@ -105,5 +109,16 @@ class BaseModel:
             **{k: v for k, v in attributes.items() if v[1] != property},
             __validators__=validators,
         )(**{k: v for k, v in kwargs.items()})
-        for i in attributes:
-            setattr(self, i, getattr(self.__pydantic_model__, i))
+        for i, (_, value) in get_attributes(
+            self.__class__, only_properties_with_set=True
+        ).items():
+            try:
+                validated_value = getattr(self.__pydantic_model__, i)
+            except AttributeError as error:
+                if i in kwargs:
+                    validated_value = kwargs[i]
+                elif value == property:
+                    continue
+                else:
+                    raise error
+            setattr(self, i, validated_value)

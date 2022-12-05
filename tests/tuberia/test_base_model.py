@@ -316,3 +316,38 @@ class TestsBaseModel:
 
         model = MyBase(name="init")
         assert model.name == "base"
+
+    def test_create_property_in_subclass_with_value_overwrite(self):
+        class MySuper(BaseModel):
+            name: str = "super"
+
+            @pydantic.validator("name", always=True)
+            def format_name(cls, value):
+                return value.upper()
+
+        class MyBase(MySuper):
+            _name: Optional[str] = None
+
+            @property
+            def name(self):
+                if self._name is not None:
+                    return self._name
+                return "base"
+
+            @name.setter
+            def name(self, name):
+                self._name = name
+
+        model = MyBase(name="init")
+        assert model.name == "init"
+        model = MyBase()
+        assert model.name == "base"
+
+    def test_linter_not_complain_about_args_with_defaults(self):
+        class MySuper(BaseModel):
+            name0: str = "name0"
+
+        class _(MySuper):
+            # If dataclass_transform does not have kw_only_default=True the
+            # next line will raise a linter error.
+            name1: str
