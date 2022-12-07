@@ -4,7 +4,7 @@ import pydantic
 import pytest
 
 from tuberia.exceptions import TuberiaException
-from tuberia.task import Task, dependency_tree
+from tuberia.task import Task, dependency_graph
 
 
 @pytest.fixture(params=["python", "pydantic"])
@@ -378,7 +378,7 @@ def test_dependency_tree():
     task0_0 = Task0(0)
     task0_1 = Task0(1)
     task1 = Task1(Task0(0), Task0(1))
-    tree = dependency_tree([task1])
+    tree = dependency_graph([task1])
     assert set(tree.nodes) == {task0_0, task0_1, task1}
     assert set(tree.edges) == {(task0_0, task1), (task0_1, task1)}
 

@@ -1,12 +1,11 @@
 from datetime import date
 
-import networkx as nx
 import pyspark.sql.types as T
 import pytest
 
 from tuberia.databricks.table import Table
 from tuberia.flow import Flow
-from tuberia.schema import column
+from tuberia.schema import Column
 
 
 class TestsTable:
@@ -55,11 +54,11 @@ class TestsTable:
     def test_pyspark_schema(self):
         class MyTable(Table):
             class schema:
-                id = column(int)
-                value0 = column(str)
-                value1 = column(date, alias="Value1")
-                value2 = column(T.IntegerType)
-                value3 = column(T.IntegerType())
+                id = Column(int)
+                value0 = Column(str)
+                value1 = Column(date, alias="Value1")
+                value2 = Column(T.IntegerType)
+                value3 = Column(T.IntegerType())
 
         table = MyTable(database="my_database")
         assert table.pyspark_schema() == T.StructType(
@@ -89,16 +88,16 @@ class TestsTable:
                         return super().__getattribute__(value)
 
                 class schema(metaclass=meta_schema):
-                    id = column(int)
+                    id = Column(int)
 
                 for i in range(self.values):
                     name = f"value{i}"
-                    setattr(schema, name, column(int, alias=name))
+                    setattr(schema, name, Column(int, alias=name))
                 return schema
 
         table = MyTable(database="my_database", values=4)
-        assert table.schema.value0 == column(int, alias="value0")
-        assert table.pyspark_schema() == T.StructType(
+        assert table.schema.value0 == Column(int, alias="value0")
+        assert table.pyspark_schema == T.StructType(
             [
                 T.StructField("id", T.LongType()),
                 T.StructField("value0", T.LongType()),
@@ -115,10 +114,9 @@ class TestsTableFlows:
 
         import pyspark.sql.functions as F
 
+        from tuberia.databricks.expectation import PrimaryKey
         from tuberia.databricks.table import Table
-        from tuberia.expectation import PrimaryKey
-        from tuberia.schema import column
-        from tuberia.visualization import open_in_browser
+        from tuberia.schema import Column
 
         class Range(Table):
             """Table with numbers from 1 to `n`.
@@ -133,7 +131,7 @@ class TestsTableFlows:
                 self.n = n
 
             class schema:
-                id = column(int)
+                id = Column(int)
 
             def expect(self):
                 yield PrimaryKey({self.schema.id})

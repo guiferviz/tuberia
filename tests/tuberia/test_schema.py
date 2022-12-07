@@ -1,9 +1,9 @@
-from tuberia.schema import column
+from tuberia.schema import Column
 
 
 def test_column_with_type():
     class schema:
-        id = column(int)
+        id = Column(int)
 
     assert schema.id == "id"
     assert schema.id.dtype == int
@@ -12,7 +12,7 @@ def test_column_with_type():
 
 def test_column_with_alias():
     class schema:
-        id = column(int, alias="identity")
+        id = Column(int, alias="identity")
 
     assert schema.id == "identity"
     assert schema.id.dtype == int
@@ -21,7 +21,7 @@ def test_column_with_alias():
 
 def test_column_with_key():
     class schema:
-        id = column(key=True)
+        id = Column(key=True)
 
     assert schema.id == "id"
     assert schema.id.dtype == str
@@ -30,7 +30,7 @@ def test_column_with_key():
 
 def test_column_default_params():
     class schema:
-        id = column()
+        id = Column()
 
     assert schema.id == "id"
     assert schema.id.dtype == str
@@ -39,10 +39,10 @@ def test_column_default_params():
 
 def test_nested_schema():
     class schema:
-        id = column()
+        id = Column()
 
         class nested:
-            id_nested = column()
+            id_nested = Column()
 
     assert schema.id == "id"
     assert schema.nested.__name__ == "nested"

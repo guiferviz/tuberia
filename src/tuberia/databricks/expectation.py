@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import abc
 import operator
+from collections import defaultdict
 from functools import reduce
-from typing import TYPE_CHECKING, Any, List, Set
+from typing import TYPE_CHECKING, Any, List, Set, Union
 
 import pydantic
 import pyspark.sql.functions as F
+from pyspark.sql import Column
 
 if TYPE_CHECKING:
     from tuberia.databricks.table import Table
@@ -99,8 +101,8 @@ class PrimaryKey(Expectation):
 
     columns: Set[str]
 
-    def __init__(self, columns):
-        self.columns = columns
+    def __init__(self, *columns: str):
+        self.columns = set(columns)
 
     def run(self, table: Table):
         df_key_columns = table.read().select(*self.columns)
@@ -143,3 +145,57 @@ class PrimaryKey(Expectation):
 
     def description(self) -> str:
         return f"Columns {self.columns} should uniquely identify a row."
+
+
+class Expression(Expectation):
+    expression: Column
+
+    def __init__(self, expression: Union[str, Column]):
+        if isinstance(expression, str):
+            expression = F.expr(expression)
+        self.expression = expression
+
+    def run(self, table: Table):
+        df_expression = table.read().withColumn(
+            "__tuberia_expression__", self.expression
+        )
+        value_counts = (
+            df_expression.groupBy("__tuberia_expression__")
+            .agg(F.count("*").alias("__count__"))
+            .collect()
+        )
+        value_counts_dict = defaultdict(lambda: 0)
+        for i in value_counts:
+            value_counts_dict.update(
+                {i["__tuberia_expression__"]: i["__count__"]}
+            )
+        element_count = sum(i for i in value_counts_dict.values())
+        missing_count = value_counts_dict[None]
+        unexpected_count = value_counts_dict[False]
+        success = unexpected_count == 0
+        if not success:
+            unexpected_list = (
+                df_expression.filter(~self.expression)
+                .drop("__tuberia_expression__")
+                .take(20)
+            )
+            unexpected_list = [i.asDict() for i in unexpected_list]
+        else:
+            unexpected_list = []
+        return RowLevelValidationReport(
+            success=success,
+            expectation=self,
+            unexpected_list=unexpected_list,
+            unexpected_keys_list=[],
+            element_count=element_count,
+            unexpected_count=unexpected_count,
+            unexpected_percent=unexpected_count / element_count,
+            unexpected_percent_nonmissing=unexpected_count
+            / (element_count - missing_count),
+            missing_count=missing_count,
+            missing_percent=missing_count / element_count,
+        )
+
+    def description(self) -> str:
+        sql = self.expression._jc.expr().sql()  # type: ignore
+        return f"Expression {sql} should be true in all rows."

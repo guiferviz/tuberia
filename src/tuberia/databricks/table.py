@@ -5,12 +5,15 @@ import re
 from typing import List, Optional, Type
 
 import inflection
+import pydantic
 import pyspark.sql.types as T
+from loguru import logger
 from pyspark.sql import DataFrame, SparkSession
 
+from tuberia.base_model import BaseModel
 from tuberia.databricks.expectation import Expectation
 from tuberia.databricks.settings import TuberiaDatabricksSettings
-from tuberia.schema import column
+from tuberia.schema import Column
 from tuberia.spark import get_spark
 from tuberia.task import Task
 
@@ -19,8 +22,8 @@ def format_name(name, task: Task):
     return name.format(vars(task))
 
 
-def default_name(table: Table) -> str:
-    name = table.__class__.__name__
+def default_name(type_table: Type) -> str:
+    name = type_table.__name__
     if TuberiaDatabricksSettings().default_table_name_underscore:
         name = inflection.underscore(name)
     return name
@@ -42,7 +45,7 @@ def python_type_to_pyspark_type(python_type: type) -> Type[T.DataType]:
         ) from err
 
 
-class Table(Task):
+class Table(Task, BaseModel):
     """A PySpark table.
 
     Attributes:
@@ -60,15 +63,22 @@ class Table(Task):
 
     """
 
-    class schema:
-        pass
-
     database: str
-    name: str
+    name: str = ""
     prefix_name: str = ""
     suffix_name: str = ""
     path: Optional[str] = None
 
+    class schema:
+        pass
+
+    @pydantic.validator("name", always=True)
+    def default_name(cls, value):
+        if not value:
+            value = default_name(cls)
+        return value
+
+    """
     def __init__(
         self,
         database: str,
@@ -85,6 +95,7 @@ class Table(Task):
         self.suffix_name = suffix_name
         self.path = path
         validate_full_name(self.full_name)
+    """
 
     @property
     def full_name(self) -> str:
@@ -101,12 +112,18 @@ class Table(Task):
         return get_spark()
 
     def expect(self) -> List[Expectation]:
-        return []
+        expectations = []
+        for _, v in vars(self.schema).items():
+            if isinstance(v, Expectation):
+                expectations.append(v)
+        return expectations
 
     def run(self):
+        logger.info(f"Running table `{self.full_name}`")
         df = self.df()
         self.write(df)
         for i in self.expect():
+            logger.info(f"Running expectation `{i}`")
             report = i.run(self)
             if not report.success:
                 raise RuntimeError(f"Expectation failed: {report}")
@@ -123,10 +140,11 @@ class Table(Task):
             writer = writer.option("path", self.full_path)
         writer.saveAsTable(self.full_name)
 
+    @property
     def pyspark_schema(self) -> T.StructType:
         struct_fields: List[T.StructField] = []
         for _, v in vars(self.schema).items():
-            if isinstance(v, column):
+            if isinstance(v, Column):
                 pyspark_type = v.dtype
                 if inspect.isclass(pyspark_type) and issubclass(
                     pyspark_type, T.DataType

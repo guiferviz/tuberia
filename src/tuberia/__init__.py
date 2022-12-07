@@ -1,3 +1,6 @@
+from pydantic import Field
+
+from tuberia.schema import Column
 from tuberia.version import __version__
 
 # Thanks to: https://patorjk.com/software/taag/#p=display&f=Bloody&t=Tuberia

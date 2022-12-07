@@ -3,14 +3,12 @@ from __future__ import annotations
 import hashlib
 import inspect
 import json
-from dataclasses import dataclass as python_dataclass
 from dataclasses import fields
 from functools import lru_cache
-from typing import Any, Dict, List, Literal, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import networkx as nx
 from pydantic.dataclasses import Callable
-from pydantic.dataclasses import dataclass as pydantic_dataclass
 
 from tuberia.exceptions import TuberiaException
 
@@ -150,20 +148,7 @@ class TaskDescriptor:
 
 
 class Task:
-    # __dataclass_type__: Optional[Literal["python", "pydantic"]]
     _task_descriptor: TaskDescriptor = TaskDescriptor()
-
-    # def __init_subclass__(
-    #    cls, dataclass: Optional[Literal["python", "pydantic"]] = None
-    # ):
-    #    cls.__dataclass_type__ = dataclass
-    #    if dataclass == "python":
-    #        return python_dataclass(eq=False)(cls)
-    #    elif dataclass == "pydantic":
-    #        return pydantic_dataclass(eq=False)(cls)
-    #    elif dataclass is None:
-    #        return cls
-    #    raise ValueError(f"Unknown dataclass value `{dataclass}`")
 
     @property
     @lru_cache
@@ -208,6 +193,7 @@ def dependency_graph(tasks: List[Task]) -> nx.DiGraph:
         task = pending_tasks.pop()
         if task in visited:
             continue
+        G.add_node(task)
         if task.id in visited_ids:
             raise ValueError(
                 f"A different task with the same ID already exists: `{task.id}`"
@@ -224,6 +210,13 @@ def dag(tasks: List[Task]) -> nx.DiGraph:
     if not nx.is_directed_acyclic_graph(G):
         raise ValueError("not a directed acyclic graph")
     return G
+
+
+def run(tasks: List[Task]):
+    G = dag(tasks)
+    for i in topological_sort_grouped(G):
+        for j in i:
+            j.run()
 
 
 def topological_sort_grouped(G):
