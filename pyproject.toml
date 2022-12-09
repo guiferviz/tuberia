@@ -10,8 +10,8 @@ packages = [
     { include = "pytest_tuberia", from = "src" },
 ]
 readme = "README.md"
-repository = "https://github.com/aidictive/tuberia"
-documentation = "https://aidictive.com/tuberia"
+repository = "https://github.com/guiferviz/tuberia"
+documentation = "https://guiferviz.com/tuberia"
 keywords = [
   "pipeline",
   "data",

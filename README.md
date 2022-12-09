@@ -1,25 +1,25 @@
 <p align="center">
-    <a href="https://aidictive.github.io/tuberia" target="_blank">
-        <img src="https://aidictive.github.io/tuberia/images/logo.png"
+    <a href="https://guiferviz.com/tuberia" target="_blank">
+        <img src="https://guiferviz.com/tuberia/images/logo.png"
              alt="Tuberia logo"
              width="800">
     </a>
 </p>
 <p align="center">
-    <a href="https://github.com/AIdictive/tuberia/actions/workflows/cicd.yaml" target="_blank">
-        <img src="https://github.com/aidictive/tuberia/actions/workflows/cicd.yaml/badge.svg"
+    <a href="https://github.com/guiferviz/tuberia/actions/workflows/cicd.yaml" target="_blank">
+        <img src="https://github.com/guiferviz/tuberia/actions/workflows/cicd.yaml/badge.svg"
              alt="Tuberia CI pipeline status">
     </a>
-    <a href="https://app.codecov.io/gh/AIdictive/tuberia/" target="_blank">
-        <img src="https://img.shields.io/codecov/c/github/aidictive/tuberia"
+    <a href="https://app.codecov.io/gh/guiferviz/tuberia/" target="_blank">
+        <img src="https://img.shields.io/codecov/c/github/guiferviz/tuberia"
              alt="Tuberia coverage status">
     </a>
-    <a href="https://github.com/AIdictive/tuberia/issues" target="_blank">
-        <img src="https://img.shields.io/github/issues/AIdictive/tuberia"
+    <a href="https://github.com/guiferviz/tuberia/issues" target="_blank">
+        <img src="https://img.shields.io/github/issues/guiferviz/tuberia"
              alt="Tuberia issues">
     </a>
-    <a href="https://github.com/aidictive/tuberia/graphs/contributors" target="_blank">
-        <img src="https://img.shields.io/github/contributors/AIdictive/tuberia"
+    <a href="https://github.com/guiferviz/tuberia/graphs/contributors" target="_blank">
+        <img src="https://img.shields.io/github/contributors/guiferviz/tuberia"
              alt="Tuberia contributors">
     </a>
     <a href="https://pypi.org/project/tuberia/" target="_blank">
@@ -37,13 +37,13 @@
 ---
 
 :books: **Documentation**:
-<a href="https://aidictive.github.io/tuberia" target="_blank">
-    https://aidictive.github.io/tuberia
+<a href="https://guiferviz.com/tuberia" target="_blank">
+    https://guiferviz.com/tuberia
 </a>
 
 :keyboard: **Source Code**:
-<a href="https://github.com/aidictive/tuberia" target="_blank">
-    https://github.com/aidictive/tuberia
+<a href="https://github.com/guiferviz/tuberia" target="_blank">
+    https://github.com/guiferviz/tuberia
 </a>
 
 ---

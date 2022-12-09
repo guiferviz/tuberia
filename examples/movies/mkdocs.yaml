@@ -1,7 +1,7 @@
 site_name: Movies - Tuberia Example Docs
-site_url: https://aidictive.com/tuberia
+site_url: https://guiferviz.com/tuberia
 site_author: guiferviz
-repo_url: https://github.com/aidictive/tuberia
+repo_url: https://github.com/guiferviz/tuberia
 repo_name: Tuberia
 strict: false
 theme:
