@@ -15,6 +15,7 @@ def test_check(test_database: str):
         class Schema:
             id = Column(int)
             _pk = PrimaryKey(id)
+            _no_zero = Expression(F.col(id) > 0)
 
         def df(self):
             return get_spark().range(10)

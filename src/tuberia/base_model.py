@@ -24,7 +24,7 @@ def is_property(member):
 
 
 def get_attributes(
-    type_object, properties=True, only_properties_with_set=False
+    type_object, properties=True, only_properties_with_set=False, reorder=True
 ):
     """Return all attributes defined in `task_class` and all superclasses.
 
@@ -39,8 +39,9 @@ def get_attributes(
         for k, v in get_annotations(superclass).items():
             if is_private_attribute_name(k):
                 continue
-            if k in attributes:
-                del attributes[k]
+            if reorder:
+                if k in attributes:
+                    del attributes[k]
             attributes[k] = (v, superclass_vars.get(k, ...))
         for i in inspect.getmembers(superclass, is_property):
             property_name = i[0]
@@ -83,12 +84,18 @@ def get_validators(
     return validators
 
 
+class Config:
+    arbitrary_types_allowed: bool = True
+
+
 @dataclass_transform(kw_only_default=True)
 class BaseModel:
     __pydantic_model__: pydantic.BaseModel
 
     def __init__(self, **kwargs):
-        attributes = get_attributes(self.__class__, properties=False)
+        attributes = get_attributes(
+            self.__class__, properties=False, reorder=False
+        )
         validators = get_validators(
             self.__class__, attributes=list(attributes.keys())
         )
@@ -108,6 +115,7 @@ class BaseModel:
             self.__class__.__name__,
             **{k: v for k, v in attributes.items() if v[1] != property},
             __validators__=validators,
+            __config__=Config,
         )(**{k: v for k, v in kwargs.items()})
         for i, (_, value) in get_attributes(
             self.__class__, only_properties_with_set=True

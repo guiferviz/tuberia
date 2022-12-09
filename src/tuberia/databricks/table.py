@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import inspect
 import re
 from typing import List, Optional, Type
 
@@ -10,10 +9,10 @@ import pyspark.sql.types as T
 from loguru import logger
 from pyspark.sql import DataFrame, SparkSession
 
+from tuberia import schema
 from tuberia.base_model import BaseModel
 from tuberia.databricks.expectation import Expectation
 from tuberia.databricks.settings import TuberiaDatabricksSettings
-from tuberia.schema import Column
 from tuberia.spark import get_spark
 from tuberia.task import Task
 
@@ -32,17 +31,6 @@ def default_name(type_table: Type) -> str:
 def validate_full_name(full_name: str):
     if not re.fullmatch(r"\w+.\w+", full_name):
         raise ValueError(f"Invalid table full name: {full_name}")
-
-
-def python_type_to_pyspark_type(python_type: type) -> Type[T.DataType]:
-    try:
-        # Ignoring linter error, if the types is not in the mappings the error
-        # will be catch.
-        return T._type_mappings[python_type]  # type: ignore
-    except KeyError as err:
-        raise KeyError(
-            f"Unknown translation from python type `{python_type}` to pyspark type"
-        ) from err
 
 
 class Table(Task, BaseModel):
@@ -142,15 +130,4 @@ class Table(Task, BaseModel):
 
     @property
     def pyspark_schema(self) -> T.StructType:
-        struct_fields: List[T.StructField] = []
-        for _, v in vars(self.schema).items():
-            if isinstance(v, Column):
-                pyspark_type = v.dtype
-                if inspect.isclass(pyspark_type) and issubclass(
-                    pyspark_type, T.DataType
-                ):
-                    pyspark_type = pyspark_type()
-                elif not isinstance(pyspark_type, T.DataType):
-                    pyspark_type = python_type_to_pyspark_type(pyspark_type)()
-                struct_fields.append(T.StructField(v, pyspark_type))
-        return T.StructType(struct_fields)
+        return schema.to_pyspark(self.schema)
