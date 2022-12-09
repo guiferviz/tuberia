@@ -87,4 +87,5 @@ nav:
     - TEP:
       - teps/tep00.md
       - teps/tep01.md
+      - teps/tep02.md
     - Tags: tags.md

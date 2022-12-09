@@ -98,13 +98,17 @@ class Range(tb.spark.Table):
         n: Max number in table.
 
     """
+    n: int = 10
+
     class schema:
         id = tb.column(int)
 
-    n: int = 10
-
     def df(self):
-        return self.spark.range(self.n).withColumn("id", F.col(self.schema.id)
+        return self.spark.range(self.n).withColumn(
+            self.schema.id,
+            F.col("id"),  # This id comes from the range function,
+                          # so we don't use self.schema.id here
+        )
 
 
 class DoubleRange(tb.spark.Table):
