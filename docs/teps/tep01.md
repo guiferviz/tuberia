@@ -279,7 +279,7 @@ example, you can use the DAG to **generate documentation** for the pipeline,
 which can be useful for other members of your team who need to understand the
 pipeline's structure and dependencies.
 
-Additionally, the DAG can be used to generate extra steps in your pipelines ,
+Additionally, the DAG can be used to generate extra steps in your pipelines,
 such as checking the schema of the data being processed match the expected one
 or checking the quality of the data to ensure that it meets certain criteria.
 

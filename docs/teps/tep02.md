@@ -203,10 +203,41 @@ class JoinTables(PySparkTable):
         ...
 ```
 
-The previous code does not work in Prefect because we are using tasks in our
+~~The previous code does not work in Prefect because we are using tasks in our
 `__init__` method but we can see that this approach provides typing annotations
 and avoids name collisions (`Table0` can now be assigned to `table0` without
-hiding any function).
+hiding any function).~~
+
+The previous code works in Prefect but it prints a warning because we are using
+task as `__init__` parameters. It is not a big problem, but it just reveals
+that Prefect has not been created for this use case.
+
+Another possible option is to mix objects with decorated functions. Objects are
+useful when we need a lot of properties for a given step, like for steps that
+are generating tables. Function decorators are fine for more generic steps or
+for steps without tons of associated properties. Example:
+
+```python
+from prefect import Task, task
+
+
+class Table0(Task):
+    def run(self):
+        print("creating table 0")
+
+class Table1(Task):
+    def run(self):
+        print("creating table 1")
+
+@task
+def join_tables(table_left, table_right, keys: List[str]):
+    print(f"join table_left with table_right using keys {keys}")
+```
+
+Although it seems that Prefect can really fit in most use cases, for the time
+being we are going to create our own Task object and, perhaps, make the
+dependency detection system so flexible that it will allow us to accept prefect
+flows in the future.
 
 !!! note
 
@@ -217,6 +248,159 @@ I could not find more libraries following an approach similar to what I have in
 mind. I did explore [invoke](https://github.com/pyinvoke/invoke) but it is more
 related to `make` than to Prefect. [celery](https://github.com/celery/celery)
 deals with distributed tasks.
+
+
+## Compile time vs Execution time
+
+Tuberia can be divided into two phases. The first phase is the compilation of
+the DAG together with code generation. The second is a command to execute one
+or more specific tasks. For example, suppose our pipeline has 2 tasks to be
+executed in Databricks orchestrated from Airflow:
+
+```python
+class Task0(Task):
+    def run(self):
+        print("task 0")
+
+class Task1(Task):
+    task0: Task0 = Task0()
+
+    def run(self):
+        print("task 1")
+```
+
+The first step is to compile the previous code into a source file recognized by
+an orchestrator tool. As we said before, the orchestrator is Airflow, and the
+executor is Databricks, hence this could be an example of generated code:
+
+```python
+from airflow import DAG
+from airflow.providers.databricks.operators.databricks import DatabricksSubmitRunOperator
+
+
+new_cluster = {
+    "spark_version": "9.1.x-scala2.12",
+    "node_type_id": "r3.xlarge",
+    "aws_attributes": {"availability": "ON_DEMAND"},
+    "num_workers": 8,
+}
+
+with DAG(dag_id="my_dag", tags=["example_tag"]) as dag:
+    task0 = DatabricksSubmitRunOperator(
+        task_id="task0",
+        json = {
+            "new_cluster": new_cluster,
+            "python_wheel_task": {
+                "package_name": "tuberia",
+                "entry_point": "tuberia",
+                "parameters": ["run", "your_package.tasks.Task1", "--id=task0"],
+            },
+        }
+    )
+    task1 = DatabricksSubmitRunOperator(
+        task_id="task1",
+        json = {
+            "new_cluster": new_cluster,
+            "python_wheel_task": {
+                "package_name": "tuberia",
+                "entry_point": "tuberia",
+                "parameters": ["run", "your_package.tasks.Task1", "--id=task1"],
+            },
+        }
+    )
+    task0 >> task1
+```
+
+Each DatabricksSubmitRunOperator runs a command on Databricks that uses Tuberia
+to execute a specific flow or task. The run command takes an ID and runs the
+corresponding task within the specified flow or task.
+
+In this example, we saw that it is important to have a unique identifier for
+each task, as it allows us to distinguish between different tasks and to
+specify which task we want to run. This unique identifier is used in the `run`
+command as a way to specify which task we want to execute.
+
+It is also important to have a way of detecting dependencies between tasks, as
+it allows us to specify the order in which tasks should be executed. In the
+example, we used the `>>` operator to specify that `task0` must be run before
+`task1`. This helps to ensure that the pipeline runs smoothly and that tasks
+are executed in the correct order.
+
+
+## Identity
+
+As we saw in the previous example, it is important to have a unique identifier
+for each task in a data pipeline, in order to be able to execute specific tasks
+and to detect dependencies between tasks. In this section, we will discuss
+different approaches to generating unique identities that can be used in
+Tuberia.
+
+
+### Option 1: Using Task class names
+
+One option for generating unique identities for tasks is to use the class name
+of the task as the identifier. This approach is simple, as it requires no
+additional effort on the part of the user. However, it has some limitations.
+For example, if a user defines multiple tasks with the same class name, these
+tasks will not be distinguished from each other by the compiler. It also causes
+two tasks of the same class with different parameters to have the same ID.
+
+Due to this lack of flexibility this option cannot be used in Tuberia.
+
+
+### Option 2: Manual IDs
+
+Another option for generating unique identities for tasks is to use manually
+assigned IDs, which are unique identifiers that the user specifies for each
+task instance.
+
+This approach allows for tasks with the same class name to be distinguished
+from each other, and allows for tasks to be identified consistently even if
+their class names or parameter values change.
+
+However, this approach requires users to manually assign IDs to their tasks,
+which can be cumbersome and error-prone. Additionally, there is a risk of ID
+collision if two tasks are assigned the same ID by mistake.
+
+
+### Option 3: Hash of Task class name and parameters
+
+A third option for generating unique identities for tasks is to use a
+deterministic hash of the task class name and parameters to generate a unique
+identifier. This approach allows for tasks with the same class name to be
+distinguished from each other, and allows for tasks to be identified
+consistently even if their class names or parameter values change.
+Additionally, it allows for tasks with different class names but similar
+parameter values to be distinguished from each other.
+
+There are a few potential issues with using a hash of the task class name and
+parameters values as the unique identifier:
+
+* One issue is that hashes often return long strings of alphanumeric
+characters, which may not be valid as an ID in some orchestrators. For example,
+many orchestrators have restrictions on the length or character set of task
+IDs, and a hash may not meet these requirements. I think we can easily overcome
+this problem generating some kind of slug using the class name and adding a
+number at the end to distinguish between instances of the same task.
+
+* Another issue is that it can be difficult to generate a deterministic hash
+from an arbitrary Python object. For example, iterating sets return a different
+hash value depending on
+[PYTHONHASHSEED](https://docs.python.org/3.4/using/cmdline.html?highlight=pythonhashseed#envvar-PYTHONHASHSEED)
+. One possible solution is to convert sets to lists and sort the list. This if
+fine as long as the elements are sortable... This kind of problems can make it
+difficult to consistently generate unique identifiers for tasks with complex or
+non-deterministic parameters.
+
+
+### Selected option: 2 and 3
+
+In Tuberia, we will support both Option 2 and Option 3 for generating unique
+identities for tasks. If a user specifies their own instance ID for a task, it
+will be used as the task's identifier. If no instance ID is specified, Tuberia
+will automatically generate an identifier based on the combination of the task
+class name and a unique instance ID. This allows users to choose the approach
+that best fits their needs and use case.
 
 
 ## Dependencies
