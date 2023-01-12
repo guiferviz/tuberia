@@ -2,6 +2,8 @@ import base64
 import webbrowser
 from typing import List
 
+from networkx import Graph
+
 MERMAID_URL = "https://mermaid.ink/svg/"
 TAB = "    "
 
@@ -55,6 +57,27 @@ def flow_to_mermaid_code(
         if "yellow" in t.tags:
             graph.append(f"{TAB}style {ids[i]} fill:#ff0")
     return "\n".join(graph)
+
+
+def networkx_to_mermaid(G: Graph) -> str:
+    graph = ["graph TD"]
+    for i in G.nodes:
+        attributes = G.nodes[i]
+        name = attributes.get("name", i.__class__.__name__)
+        id = attributes.get("id", i.id)
+        graph.append(f"{TAB}{id}[{name}]")
+    for i, j in G.edges:
+        id_i = G.nodes[i].get("id", i.id)
+        id_j = G.nodes[j].get("id", j.id)
+        graph.append(f"{TAB}{id_i} --> {id_j}")
+    return "\n".join(graph)
+
+
+def open_in_browser(G: Graph):
+    graph = networkx_to_mermaid(G)
+    graph_base64 = encode_to_base64(graph)
+    url = MERMAID_URL + graph_base64
+    open_url_in_new_tab(url)
 
 
 def open_mermaid_flow_in_browser(flow):

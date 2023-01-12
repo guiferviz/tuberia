@@ -1,7 +1,7 @@
 from typing import List
 
+from tuberia.databricks.table import Table
 from tuberia.flow import Flow
-from tuberia.table import Table
 
 
 def test_get_dict_tables():

@@ -5,8 +5,7 @@ from typing import Dict, List
 import pydantic
 import pytest
 
-from tuberia.flow import make_prefect_flow
-from tuberia.table import Table
+from tuberia.databricks.table import Table
 from tuberia.visualization import (
     flow_to_mermaid_code,
     open_mermaid_flow_in_browser,

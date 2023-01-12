@@ -53,6 +53,6 @@ TEP files should be written in a friendly way, without assuming too much
 knowledge on the part of the reader. It is a technical document, but technical
 terms should not be abused.
 
-They do not require a common structure, just make sure it is comprehensible.
+A common structure is not required, just make sure it is comprehensible.
 Include an abstract after the metadata table at the beginning and organise the
 article into sections of your choice.

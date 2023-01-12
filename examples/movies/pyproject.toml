@@ -2,7 +2,7 @@
 name = "movies"
 version = "0.1.0"
 description = "Tuberia example using movies data"
-authors = ["Guillermo Fernandez <guillermo.fernandez@truata.com>"]
+authors = ["guiferviz <guiferviz@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]

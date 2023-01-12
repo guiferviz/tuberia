@@ -1,3 +1,6 @@
+# Ignore airflow data.
+airflow_data/
+
 # Ignore spark database dir.
 spark_data/
 

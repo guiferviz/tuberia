@@ -10,8 +10,8 @@ packages = [
     { include = "pytest_tuberia", from = "src" },
 ]
 readme = "README.md"
-repository = "https://github.com/aidictive/tuberia"
-documentation = "https://aidictive.com/tuberia"
+repository = "https://github.com/guiferviz/tuberia"
+documentation = "https://guiferviz.com/tuberia"
 keywords = [
   "pipeline",
   "data",
@@ -35,17 +35,23 @@ tuberia = "tuberia.__main__:main"
 pytest_tuberia = "pytest_tuberia"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = ">=3.8,<3.11"
 typer = "^0.4.0"
 loguru = "^0.6.0"
 pydantic = "^1.9.0"
-prefect = "^1.2.0"
+prefect = "^2.7.4"
 pyspark = { version = "3.3.0", optional = true }
 # Notice that delta-spark version must be in sync with pyspark:
 # https://docs.delta.io/latest/releases.html#compatibility-with-apache-spark
 delta-spark = { version = "2.1.0", optional = true }
 makefun = "^1.14.0"
 inflection = "^0.5.1"
+databricks-cli = "^0.17.3"
+networkx = "^2.8.8"
+typing-extensions = "^4.4.0"
+varname = "^0.10.0"
+ibis-framework = {extras = ["polars", "pyspark"], version = "^3.2.0"}
+sqlalchemy = "^1.4.44"
 
 [tool.poetry.extras]
 pyspark = ["pyspark", "delta-spark"]
@@ -60,13 +66,26 @@ pdbpp = "^0.10.3"
 # Static analyzers / formatters.
 flake8 = "^5.0.4"
 Flake8-pyproject = "^1.1.0.post0"
-pyright = "^0.0.13"
+pyright = "^1.1.281"
 black = "^22.1.0"
 isort = "^5.10.1"
 pre-commit = "^2.18.1"
 # Docs.
 mkdocs-material = "^8.2.9"
 mkdocs-macros-plugin = "^0.7.0"
+cruft = "^2.11.1"
+mkdocs-jupyter = "^0.22.0"
+pydocstyle = "^6.1.1"
+notebook = "^6.5.2"
+apache-airflow = "^2.5.0"
+
+
+[tool.poetry.group.develop.dependencies]
+mypy = "^0.991"
+
+
+[tool.poetry.group.airflow.dependencies]
+apache-airflow-providers-databricks = "^4.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -116,3 +135,13 @@ count = true
 show-source = true
 # Count the number of occurrences of each error/warning code and print a report.
 statistics = true
+
+[tool.coverage.report]
+# Regexes for lines to exclude from coverage
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "except ImportError",
+    'if __name__ == "__main__":',
+    "@overload"
+]

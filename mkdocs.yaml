@@ -1,7 +1,7 @@
 site_name: Tuberia Docs
-site_url: https://aidictive.com/tuberia
+site_url: https://guiferviz.com/tuberia
 site_author: guiferviz
-repo_url: https://github.com/aidictive/tuberia
+repo_url: https://github.com/guiferviz/tuberia
 repo_name: Tuberia
 strict: true
 
@@ -31,6 +31,12 @@ plugins:
         include_dir: docs/include
         on_error_fail: true
         module_name: docs/macros
+    - mkdocs-jupyter:
+        ignore: [
+          "macros.py",
+        ]
+        execute: true
+        allow_errors: false
 
 markdown_extensions:
     - meta
@@ -59,6 +65,9 @@ markdown_extensions:
     # Superfences admonition.
     - admonition
     - pymdownx.details
+    - md_in_html
+    # Cross out text using ~~text~~.
+    - pymdownx.tilde
 
 extra_javascript:
   - javascripts/mathjax.js
@@ -86,4 +95,5 @@ nav:
     - TEP:
       - teps/tep00.md
       - teps/tep01.md
+      - teps/tep02.md
     - Tags: tags.md

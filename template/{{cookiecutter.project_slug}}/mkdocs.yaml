@@ -1,0 +1,75 @@
+site_name: {{ cookiecutter.project_name }} Docs
+site_url: https://guiferviz.com/tuberia
+site_author: guiferviz
+repo_url: https://github.com/guiferviz/tuberia
+repo_name: Tuberia
+strict: true
+
+theme:
+    name: material
+    palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: amber
+      accent: amber
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: amber
+      accent: amber
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+plugins:
+    - search
+
+markdown_extensions:
+    - meta
+    # Code highlight.
+    - pymdownx.highlight:
+        anchor_linenums: true
+    - pymdownx.inlinehilite
+    - pymdownx.snippets
+    # MathJax with some options in the extra_javascript.
+    - pymdownx.arithmatex:
+        generic: true
+    # Mermaid plots.
+    - pymdownx.superfences:
+        custom_fences:
+            - name: mermaid
+              class: mermaid
+              format: !!python/name:pymdownx.superfences.fence_code_format
+    # Emoji.
+    - attr_list
+    - pymdownx.emoji:
+        emoji_index: !!python/name:materialx.emoji.twemoji
+        emoji_generator: !!python/name:materialx.emoji.to_svg
+    # Task lists with checkboxes.
+    - pymdownx.tasklist:
+        custom_checkbox: true
+    # Superfences admonition.
+    - admonition
+    - pymdownx.details
+    - md_in_html
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+extra:
+  generator: false
+  social:
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/{{ cookiecutter.twitter_username }}
+    - icon: fontawesome/brands/linkedin
+      link: https://linkedin.com/in/{{ cookiecutter.linkedin_username }}
+    - icon: fontawesome/brands/github
+      link: https://github.com/{{ cookiecutter.github_username }}
+
+nav:
+    - Home: index.md
+    - Changelog: changelog.md

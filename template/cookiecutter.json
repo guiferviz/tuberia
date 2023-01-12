@@ -1,0 +1,19 @@
+{
+    "project_name": "Tuberia Python Project",
+    "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '-') }}",
+    "module_name": "{{ cookiecutter.project_slug.replace('-', '_') }}",
+    "project_short_description": "A brand new Tuberia Python project.",
+    "version": "0.0.0",
+    "author_name": "guiferviz",
+    "author_email": "guiferviz@gmail.com",
+    "twitter_username": "{{ cookiecutter.author_name }}",
+    "linkedin_username": "{{ cookiecutter.author_name }}",
+    "github_username": "{{ cookiecutter.author_name }}",
+    "spark_version": [
+        "3.3.0",
+        "3.2.0"
+    ],
+    "delta_version": "{%- if cookiecutter.spark_version == '3.3.0' -%} 2.1.0 {%- elif cookiecutter.spark_version == '3.2.0' -%} 2.0.0 {%- endif -%}",
+    "jdk_version": "11",
+    "min_poetry_version": "1.2.0"
+}

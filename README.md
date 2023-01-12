@@ -1,25 +1,25 @@
 <p align="center">
-    <a href="https://aidictive.github.io/tuberia" target="_blank">
-        <img src="https://aidictive.github.io/tuberia/images/logo.png"
+    <a href="https://guiferviz.com/tuberia" target="_blank">
+        <img src="https://guiferviz.com/tuberia/images/logo.png"
              alt="Tuberia logo"
              width="800">
     </a>
 </p>
 <p align="center">
-    <a href="https://github.com/AIdictive/tuberia/actions/workflows/cicd.yaml" target="_blank">
-        <img src="https://github.com/aidictive/tuberia/actions/workflows/cicd.yaml/badge.svg"
+    <a href="https://github.com/guiferviz/tuberia/actions/workflows/cicd.yaml" target="_blank">
+        <img src="https://github.com/guiferviz/tuberia/actions/workflows/cicd.yaml/badge.svg"
              alt="Tuberia CI pipeline status">
     </a>
-    <a href="https://app.codecov.io/gh/AIdictive/tuberia/" target="_blank">
-        <img src="https://img.shields.io/codecov/c/github/aidictive/tuberia"
+    <a href="https://app.codecov.io/gh/guiferviz/tuberia/" target="_blank">
+        <img src="https://img.shields.io/codecov/c/github/guiferviz/tuberia"
              alt="Tuberia coverage status">
     </a>
-    <a href="https://github.com/AIdictive/tuberia/issues" target="_blank">
-        <img src="https://img.shields.io/github/issues/AIdictive/tuberia"
+    <a href="https://github.com/guiferviz/tuberia/issues" target="_blank">
+        <img src="https://img.shields.io/github/issues/guiferviz/tuberia"
              alt="Tuberia issues">
     </a>
-    <a href="https://github.com/aidictive/tuberia/graphs/contributors" target="_blank">
-        <img src="https://img.shields.io/github/contributors/AIdictive/tuberia"
+    <a href="https://github.com/guiferviz/tuberia/graphs/contributors" target="_blank">
+        <img src="https://img.shields.io/github/contributors/guiferviz/tuberia"
              alt="Tuberia contributors">
     </a>
     <a href="https://pypi.org/project/tuberia/" target="_blank">
@@ -37,13 +37,13 @@
 ---
 
 :books: **Documentation**:
-<a href="https://aidictive.github.io/tuberia" target="_blank">
-    https://aidictive.github.io/tuberia
+<a href="https://guiferviz.com/tuberia" target="_blank">
+    https://guiferviz.com/tuberia
 </a>
 
 :keyboard: **Source Code**:
-<a href="https://github.com/aidictive/tuberia" target="_blank">
-    https://github.com/aidictive/tuberia
+<a href="https://github.com/guiferviz/tuberia" target="_blank">
+    https://github.com/guiferviz/tuberia
 </a>
 
 ---
@@ -88,11 +88,10 @@ table.
 
 ```python
 import pyspark.sql.functions as F
+import tuberia as tb
 
-from tuberia import PySparkTable, run
 
-
-class Range(PySparkTable):
+class Range(tb.spark.Table):
     """Table with numbers from 1 to `n`.
 
     Attribute:
@@ -101,18 +100,30 @@ class Range(PySparkTable):
     """
     n: int = 10
 
+    class schema:
+        id = tb.column(int)
+
     def df(self):
-        return self.spark.range(self.n).withColumn("id", F.col(self.schema.id)
+        return self.spark.range(self.n).withColumn(
+            self.schema.id,
+            F.col("id"),  # This id comes from the range function,
+                          # so we don't use self.schema.id here
+        )
 
 
-class DoubleRange(PySparkTable):
+class DoubleRange(tb.spark.Table):
+    class schema:
+        id = tb.column(int)
+
     range: Range = Range()
 
     def df(self):
-        return self.range.read().withColumn("id", F.col("id") * 2)
+        return self.range.read().withColumn(
+            self.schema.id, F.col(self.range.schema.id) * 2
+        )
 
 
-run(DoubleRange())
+tb.run(DoubleRange())
 ```
 
 !!! warning
