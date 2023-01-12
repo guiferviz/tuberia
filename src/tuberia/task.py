@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import abc
 import hashlib
 import inspect
 import json
@@ -8,9 +9,14 @@ from functools import lru_cache
 from typing import Any, Dict, List, Optional, Tuple
 
 import networkx as nx
+from loguru import logger
 from pydantic.dataclasses import Callable
 
+from tuberia.base_model import BaseModel
 from tuberia.exceptions import TuberiaException
+from tuberia.utils import list_or_generator_or_value_to_list
+
+GET_DEPENDENCIES_METHOD_NAME = "get_dependencies"
 
 
 def is_private_attribute_name(name):
@@ -67,11 +73,9 @@ def to_hashable_data_structure(obj: Any):
     return obj
 
 
-def public_fields(dataclass):
+def public_attributes(task: Any) -> List[str]:
     return [
-        i.name
-        for i in fields(dataclass)
-        if not is_private_attribute_name(i.name)
+        i for i in list(vars(task).keys()) if not is_private_attribute_name(i)
     ]
 
 
@@ -147,7 +151,7 @@ class TaskDescriptor:
         )
 
 
-class Task:
+class Task(BaseModel):
     _task_descriptor: TaskDescriptor = TaskDescriptor()
 
     @property
@@ -163,7 +167,7 @@ class Task:
             self_tuple = self._task_descriptor.get_public_tuple(self)
             other_tuple = other._task_descriptor.get_public_tuple(other)
             return self_tuple == other_tuple
-        raise NotImplementedError
+        return False
 
     def __hash__(self):
         return hash(self._task_descriptor.get_hashable_data_structure(self))
@@ -232,3 +236,122 @@ def topological_sort_grouped(G):
                 if not indegree_map[child]:
                     new_zero_indegree.append(child)
         zero_indegree = new_zero_indegree
+
+
+class DependencyExtractor(abc.ABC):
+    """Extract dependencies of a given Task."""
+
+    @abc.abstractmethod
+    def get_dependencies(self, task: Task) -> List[Task]:
+        raise NotImplementedError()
+
+
+class DynamicDependencyExtractor(DependencyExtractor):
+    """Dynamically extract dependencies from the attributes of a Task object.
+
+    The extractor iterates over all public attributes of the task object and
+    adds all the tasks found in their attribute values as dependencies of the
+    given task. It also works with attributes of type list or dict that contain
+    tasks. In the case of dictionaries, only the values are considered as
+    dependencies.
+
+    This extractor does not detect tasks in nested data structures. Example:
+
+    ```python
+    class ATask(Task):
+        pass
+
+    class AnotherTask(Task):
+        attribute: List[List[Task]] = [[ATask()]]
+    ```
+
+    In this case, `AnotherTask` does not depend on `ATask` because it is nested
+    in a list.
+
+    To overcome this limitation, you can define a `get_dependencies` method in
+    your task class. The extractor will inspect the task object and, if this
+    method is found, it will use the output as the list of dependencies. The
+    inspector will also check that the list returned by the `get_dependencies`
+    method contains only objects that inherit from Task. If any of the objects
+    are not of type Task, a `ValueError` will be thrown.
+
+    The signature of the `get_dependencies` method in a task object could be
+    any of the following ones:
+
+    ```python
+    def get_dependencies(self) -> Task:
+        return my_dependency_task
+
+    def get_dependencies(self) -> List[Task]:
+        return [my_dependency_task]
+
+    def get_dependencies(self) -> Iterator[Task]:
+        yield my_dependency_task
+    ```
+
+    The get_dependencies method in a class can return just one task, a list of
+    tasks or an iterator that yields multiple tasks. See
+    [`list_or_generator_or_value_to_list`][tuberia.utils.list_or_generator_or_value_to_list]
+    for more information.
+
+    """
+
+    def get_dependencies(self, task: Task) -> List[Task]:
+        dependencies = []
+        if hasattr(task, GET_DEPENDENCIES_METHOD_NAME):
+            dependencies = self._get_dependencies_from_method(task)
+        else:
+            dependencies = self._get_dependencies_from_attributes(task)
+        return dependencies
+
+    def _get_dependencies_from_method(self, task: Task):
+        dependencies = list_or_generator_or_value_to_list(
+            # We assume the method exists if this function is called.
+            getattr(task, GET_DEPENDENCIES_METHOD_NAME)()
+        )
+        if not all(isinstance(d, Task) for d in dependencies):
+            invalid_dependencies = [
+                str(d) for d in dependencies if not isinstance(d, Task)
+            ]
+            raise ValueError(
+                f"`get_dependencies` of task `{task}` should return only objects of type Task."
+                f" Found invalid dependencies: {invalid_dependencies}"
+            )
+        return dependencies
+
+    def _get_public_attributes(self, task: Task) -> List[str]:
+        all_fields = list(vars(task).keys())
+        return [i for i in all_fields if not is_private_attribute_name(i)]
+
+    def _get_dependencies_from_attributes(self, task):
+        dependencies = []
+        attributes = public_attributes(task)
+        for attr in attributes:
+            value = getattr(task, attr)
+            if isinstance(value, List):
+                dependencies.extend(self._get_dependencies_from_list(value))
+            elif isinstance(value, Dict):
+                dependencies.extend(self._get_dependencies_from_dict(value))
+            elif isinstance(value, Task):
+                dependencies.append(value)
+        return dependencies
+
+    def _get_dependencies_from_list(self, lst: list):
+        dependencies = list(filter(lambda x: isinstance(x, Task), lst))
+        if len(dependencies) > 0 and len(lst) != len(dependencies):
+            for i in filter(lambda x: not isinstance(x, Task), lst):
+                logger.warning(
+                    f"Object of type {type(i)} is not a Task and will be ignored."
+                    " This happens when a list contains tasks mixed with other type of objects."
+                )
+        return dependencies
+
+    def _get_dependencies_from_dict(self, dct: dict):
+        dependencies = list(filter(lambda x: isinstance(x, Task), dct.values()))
+        if len(dependencies) > 1 and len(dct) != len(dependencies):
+            for i in filter(lambda x: not isinstance(x, Task), dct.values()):
+                logger.warning(
+                    f"Object of type {type(i)} is not a Task and will be ignored."
+                    " This happens when a dictionary contains tasks mixed with other type of objects."
+                )
+        return dependencies

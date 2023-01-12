@@ -1,9 +1,7 @@
 import typer
 from loguru import logger
 
-from tuberia import docs, greet
-from tuberia.deployer import Deployer
-from tuberia.flow import Flow
+from tuberia import greet
 from tuberia.spark import get_spark
 
 app = typer.Typer()

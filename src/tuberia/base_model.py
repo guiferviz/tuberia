@@ -93,9 +93,7 @@ class BaseModel:
     __pydantic_model__: pydantic.BaseModel
 
     def __init__(self, **kwargs):
-        attributes = get_attributes(
-            self.__class__, properties=False, reorder=False
-        )
+        attributes = get_attributes(self.__class__, properties=False)
         validators = get_validators(
             self.__class__, attributes=list(attributes.keys())
         )
@@ -115,7 +113,7 @@ class BaseModel:
             self.__class__.__name__,
             **{k: v for k, v in attributes.items() if v[1] != property},
             __validators__=validators,
-            __config__=Config,
+            __config__=Config,  # type: ignore
         )(**{k: v for k, v in kwargs.items()})
         for i, (_, value) in get_attributes(
             self.__class__, only_properties_with_set=True

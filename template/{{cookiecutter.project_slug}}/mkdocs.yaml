@@ -1,4 +1,4 @@
-site_name: Tuberia Docs
+site_name: {{ cookiecutter.project_name }} Docs
 site_url: https://guiferviz.com/tuberia
 site_author: guiferviz
 repo_url: https://github.com/guiferviz/tuberia
@@ -24,19 +24,7 @@ theme:
         name: Switch to light mode
 
 plugins:
-    - tags:
-        tags_file: tags.md
     - search
-    - macros:
-        include_dir: docs/include
-        on_error_fail: true
-        module_name: docs/macros
-    - mkdocs-jupyter:
-        ignore: [
-          "macros.py",
-        ]
-        execute: true
-        allow_errors: false
 
 markdown_extensions:
     - meta
@@ -66,8 +54,6 @@ markdown_extensions:
     - admonition
     - pymdownx.details
     - md_in_html
-    # Cross out text using ~~text~~.
-    - pymdownx.tilde
 
 extra_javascript:
   - javascripts/mathjax.js
@@ -76,24 +62,14 @@ extra_javascript:
 
 extra:
   generator: false
-  analytics:
-    provider: google
-    property: G-NCB5QMMEKH  # TODO: update, do not use guiferviz's property.
   social:
     - icon: fontawesome/brands/twitter
-      link: https://twitter.com/guiferviz
+      link: https://twitter.com/{{ cookiecutter.twitter_username }}
     - icon: fontawesome/brands/linkedin
-      link: https://linkedin.com/in/guiferviz
+      link: https://linkedin.com/in/{{ cookiecutter.linkedin_username }}
     - icon: fontawesome/brands/github
-      link: https://github.com/guiferviz
+      link: https://github.com/{{ cookiecutter.github_username }}
 
 nav:
     - Home: index.md
-    - FAQ: faq.md
-    - Changes: changelog.md
-    - Contributing: contributing.md
-    - TEP:
-      - teps/tep00.md
-      - teps/tep01.md
-      - teps/tep02.md
-    - Tags: tags.md
+    - Changelog: changelog.md

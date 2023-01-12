@@ -1,20 +1,11 @@
-from typing import Any
+import logging
+from typing import Any, Dict, List
 
 import pydantic
 import pytest
 
 from tuberia.exceptions import TuberiaException
-from tuberia.task import Task, dependency_graph
-
-
-@pytest.fixture(params=["python", "pydantic"])
-def dataclass(request):
-    return request.param
-
-
-@pytest.fixture(params=["python", "pydantic", "none"])
-def dataclass_or_none(request):
-    return None if request.param == "none" else request.param
+from tuberia.task import DynamicDependencyExtractor, Task, dependency_graph
 
 
 @pytest.fixture
@@ -26,8 +17,8 @@ def value_task():
     return ValueTask
 
 
-def test_task_without_dataclass():
-    class ValueTask(Task, dataclass=None):
+def test_task_with_init():
+    class ValueTask(Task):
         def __init__(self, value: int):
             self.value = value
 
@@ -35,31 +26,15 @@ def test_task_without_dataclass():
     assert task.value == 3
 
 
-def test_task_with_python_dataclass():
-    class ValueTask(Task, dataclass="python"):
-        value: int
-
-    task = ValueTask(3)
-    assert task.value == 3
-
-
-def test_task_with_pydantic_dataclass():
-    class ValueTask(Task, dataclass="pydantic"):
-        value: int
-
-    task = ValueTask("3")  # type: ignore
-    assert task.value == 3
-
-
-def test_task_with_pydantic_dataclass_and_validators():
-    class ValueTask(Task, dataclass="pydantic"):
+def test_task_with_validators():
+    class ValueTask(Task):
         value: int
 
         @pydantic.validator("value")
         def double_value(cls, value):
             return value * 2
 
-    task = ValueTask(3)
+    task = ValueTask(value=3)
     assert task.value == 6
 
 
@@ -426,3 +401,250 @@ def test_hash_with_different_classes_same_fields():
     assert hash(task0) != hash(task1)
     with pytest.raises(NotImplementedError):
         assert task0 == task1
+
+
+class TestDynamicDependencyExtractor:
+    @pytest.fixture
+    def extractor(self):
+        return DynamicDependencyExtractor()
+
+    def test_get_dependencies_from_list_empty(
+        self, extractor: DynamicDependencyExtractor
+    ):
+        assert extractor._get_dependencies_from_list([]) == []
+
+    def test_get_dependencies_from_list_one_task(
+        self, extractor: DynamicDependencyExtractor
+    ):
+        task = Task()
+        assert extractor._get_dependencies_from_list([task]) == [task]
+
+    def test_get_dependencies_from_list_multiple_tasks(
+        self, extractor: DynamicDependencyExtractor
+    ):
+        task1 = Task()
+        task2 = Task()
+        assert extractor._get_dependencies_from_list([task1, task2]) == [
+            task1,
+            task2,
+        ]
+
+    def test_get_dependencies_from_list_multiple_tasks_keep_order(
+        self, extractor: DynamicDependencyExtractor
+    ):
+        task1 = Task()
+        task2 = Task()
+        assert extractor._get_dependencies_from_list([task2, task1]) == [
+            task2,
+            task1,
+        ]
+
+    def test_get_dependencies_from_list_with_other_types(
+        self, extractor: DynamicDependencyExtractor, caplog
+    ):
+        with caplog.at_level(logging.WARNING):
+            assert extractor._get_dependencies_from_list([1, object()]) == []
+            assert len(caplog.records) == 0
+
+    def test_get_dependencies_from_list_mixed_objects(
+        self, extractor: DynamicDependencyExtractor, caplog
+    ):
+        task1 = Task()
+        task2 = Task()
+        with caplog.at_level(logging.WARNING):
+            assert extractor._get_dependencies_from_list(
+                [task1, 1, task2, object()]
+            ) == [task1, task2]
+            assert len(caplog.records) == 2
+            assert [i.message for i in caplog.records] == [
+                "Object of type <class 'int'> is not a Task and will be ignored."
+                " This happens when a list contains tasks mixed with other type of objects.",
+                "Object of type <class 'object'> is not a Task and will be ignored."
+                " This happens when a list contains tasks mixed with other type of objects.",
+            ]
+
+    def test_get_dependencies_from_list_nested_structure(
+        self, extractor: DynamicDependencyExtractor
+    ):
+        task1 = Task()
+        task2 = Task()
+        task3 = Task()
+        assert extractor._get_dependencies_from_list(
+            [[task1, task2], task3, {task1: task2}]
+        ) == [task3]
+
+    def test_get_dependencies_from_dict_empty(
+        self, extractor: DynamicDependencyExtractor
+    ):
+        assert extractor._get_dependencies_from_dict({}) == []
+
+    def test_get_dependencies_from_dict_one_task_as_value(
+        self, extractor: DynamicDependencyExtractor
+    ):
+        task = Task()
+        assert extractor._get_dependencies_from_dict({"value": task}) == [task]
+
+    def test_get_dependencies_from_dict_one_task_as_key(
+        self, extractor: DynamicDependencyExtractor
+    ):
+        task = Task()
+        assert extractor._get_dependencies_from_dict({task: "value"}) == []
+
+    def test_get_dependencies_from_dict_multiple_tasks(
+        self, extractor: DynamicDependencyExtractor
+    ):
+        task1 = Task()
+        task2 = Task()
+        assert extractor._get_dependencies_from_dict(
+            {"value1": task1, "value2": task2}
+        ) == [
+            task1,
+            task2,
+        ]
+
+    def test_get_dependencies_from_dict_multiple_tasks_keep_order(
+        self, extractor: DynamicDependencyExtractor
+    ):
+        task1 = Task()
+        task2 = Task()
+        assert extractor._get_dependencies_from_dict(
+            {"value2": task2, "value1": task1}
+        ) == [
+            task2,
+            task1,
+        ]
+
+    def test_get_dependencies_from_dict_with_other_types(
+        self, extractor: DynamicDependencyExtractor, caplog
+    ):
+        with caplog.at_level(logging.WARNING):
+            assert (
+                extractor._get_dependencies_from_dict(
+                    {"value1": 1, "value2": object()}
+                )
+                == []
+            )
+            assert len(caplog.records) == 0
+
+    def test_get_dependencies_from_dict_mixed_objects(
+        self, extractor: DynamicDependencyExtractor, caplog
+    ):
+        task1 = Task()
+        task2 = Task()
+        with caplog.at_level(logging.WARNING):
+            assert extractor._get_dependencies_from_dict(
+                {
+                    "value1": task1,
+                    "value2": 1,
+                    "value3": task2,
+                    "value4": object(),
+                }
+            ) == [task1, task2]
+            assert len(caplog.records) == 2
+            assert [i.message for i in caplog.records] == [
+                "Object of type <class 'int'> is not a Task and will be ignored."
+                " This happens when a dictionary contains tasks mixed with other type of objects.",
+                "Object of type <class 'object'> is not a Task and will be ignored."
+                " This happens when a dictionary contains tasks mixed with other type of objects.",
+            ]
+
+    def test_get_dependencies_from_dict_nested_structure(
+        self, extractor: DynamicDependencyExtractor
+    ):
+        task1 = Task()
+        task2 = Task()
+        task3 = Task()
+        assert extractor._get_dependencies_from_dict(
+            {"value1": [task1], "value2": task3, "value3": {task1: task2}}
+        ) == [task3]
+
+    def test_get_dependencies_from_method_that_returns_a_list(
+        self, extractor: DynamicDependencyExtractor
+    ):
+        task1 = Task()
+
+        class TestTask(Task):
+            def get_dependencies(self):
+                return [task1]
+
+        assert extractor.get_dependencies(TestTask()) == [task1]
+
+    def test_get_dependencies_from_method_that_yields_a_task(
+        self, extractor: DynamicDependencyExtractor
+    ):
+        task1 = Task()
+
+        class TestTask(Task):
+            def get_dependencies(self):
+                yield task1
+
+        assert extractor.get_dependencies(TestTask()) == [task1]
+
+    def test_get_dependencies_from_method_that_returns_one_task(
+        self, extractor: DynamicDependencyExtractor
+    ):
+        task1 = Task()
+
+        class TestTask(Task):
+            def get_dependencies(self):
+                return task1
+
+        assert extractor.get_dependencies(TestTask()) == [task1]
+
+    def test_get_dependencies_from_method_that_returns_a_invalid_value(
+        self, extractor: DynamicDependencyExtractor
+    ):
+        task1 = Task()
+
+        class InvalidTask(Task):
+            def get_dependencies(self):
+                return {"value": task1}
+
+        with pytest.raises(
+            ValueError, match="should return only objects of type Task"
+        ):
+            extractor.get_dependencies(InvalidTask())
+
+    def test_get_dependencies_from_attributes_simple_attribute(
+        self, extractor: DynamicDependencyExtractor
+    ):
+        task1 = Task()
+
+        class TestTask(Task):
+            attribute: Task = task1
+
+        assert extractor.get_dependencies(TestTask()) == [task1]
+
+    def test_get_dependencies_from_attributes_list(
+        self, extractor: DynamicDependencyExtractor
+    ):
+        task1 = Task()
+
+        class TestTask(Task):
+            attribute: List[Task] = [task1]
+
+        assert extractor.get_dependencies(TestTask()) == [task1]
+
+    def test_get_dependencies_from_attributes_dict(
+        self, extractor: DynamicDependencyExtractor
+    ):
+        task1 = Task()
+
+        class TestTask(Task):
+            attribute: Dict[str, Task] = {"tuberia": task1}
+
+        assert extractor.get_dependencies(TestTask()) == [task1]
+
+    def test_get_dependencies_prefers_get_dependencies_over_attributes(
+        self, extractor: DynamicDependencyExtractor
+    ):
+        task1 = Task()
+        task2 = Task()
+
+        class TestTask(Task):
+            attribute: Task = task1
+
+            def get_dependencies(self) -> Task:
+                return task2
+
+        assert extractor.get_dependencies(TestTask()) == [task2]
